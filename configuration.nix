@@ -4,7 +4,7 @@
 # 
 # This configuration provides a complete Wayland desktop environment with:
 # - Hyprland window manager with BÉPO keyboard layout
-# - NVIDIA GPU support optimized for Wayland
+# - Optional NVIDIA GPU support (via nvidia.nix if present)
 # - Solarized Dark theme throughout
 # - Development tools (Emacs, Git, direnv)
 # - Modern applications (Brave, GIMP, etc.)
@@ -24,7 +24,22 @@
     ./cachix.nix                    # Binary cache configuration
     ./hardware-configuration.nix    # Hardware-specific settings
     <home-manager/nixos>            # Home Manager integration
-  ];
+  ] ++ (builtins.filter (f: builtins.pathExists f) [
+    ./nvidia.nix                    # NVIDIA configuration (optional)
+  ]);
+
+  #=============================================================================
+  # Garbage collection
+  #=============================================================================
+
+   nix.gc = {
+     automatic = true;
+     dates = "weekly";           # Run weekly
+     options = "--delete-older-than 30d";  # Keep last 30 days
+   };
+   
+   # Also clean up the Nix store automatically
+   nix.settings.auto-optimise-store = true;
 
   #=============================================================================
   # BOOT & KERNEL CONFIGURATION
@@ -42,42 +57,14 @@
   };
 
   #=============================================================================
-  # GRAPHICS & NVIDIA CONFIGURATION
-  # Optimized for Wayland + NVIDIA with proper power management
+  # GRAPHICS CONFIGURATION
+  # Basic graphics stack (NVIDIA-specific parts in nvidia.nix)
   #=============================================================================
   
   # Enable modern graphics stack with 32-bit support for compatibility
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
-  };
-
-  # Configure NVIDIA driver for both X11 and Wayland
-  services.xserver.videoDrivers = [ "nvidia" ];
-
-  hardware.nvidia = {
-    # Essential for Wayland compositors
-    modesetting.enable = true;
-
-    # Power Management Settings
-    # Note: Basic power management is disabled as it can cause sleep issues
-    # Enable only if experiencing corruption after wake from sleep
-    powerManagement = {
-      enable = false;      # Basic power management
-      finegrained = false; # Fine-grained power management (Turing+ only)
-    };
-
-    # Driver Selection
-    # Use proprietary driver for maximum compatibility and performance
-    # Open-source driver is still experimental (alpha quality)
-    open = false;
-
-    # Enable NVIDIA control panel access
-    nvidiaSettings = true;
-
-    # Use stable driver for GTX 1080 (Pascal architecture)
-    # Alternative: config.boot.kernelPackages.nvidiaPackages.legacy_470
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
 
   #=============================================================================
@@ -233,6 +220,8 @@
       networkmanagerapplet        # Network management GUI
       pavucontrol                 # Audio control
       libnotify                   # To send notifications
+      htop                        # System monitoring for popup
+      btop                        # Better system monitoring
       wget                        # File downloader
       
       # Wayland Tools
@@ -249,12 +238,8 @@
       gimp3                       # Image editor
       kitty                       # Terminal emulator
       yazi                        # File manager
-      
-      # NVIDIA Wayland Support
-      nvidia-vaapi-driver         # Hardware video acceleration
 
       # Scripts to put in PATH
-      # Add grimshot and the custom menu script
       (pkgs.writeShellScriptBin "grimshot-menu" ''
         #!/bin/sh
         
@@ -330,30 +315,42 @@
       (pkgs.writeShellScriptBin "clipboard-menu" ''
         #!/bin/sh
         
-        # Check if cliphist database exists, if not create it
-        if [ ! -f "$HOME/.cache/cliphist/db" ]; then
-            mkdir -p "$HOME/.cache/cliphist"
-            echo "No clipboard history found. Start copying items to build history."
-            notify-send "Clipboard" "No history found. Copy something first!" -t 3000
-            exit 1
-        fi
-        
-        # Get clipboard history and format for rofi
-        # Show last 20 items, truncate long lines
-        clips=$(cliphist list | head -20 | cut -c1-100)
+        # Check if cliphist has any content
+        clips=$(cliphist list 2>/dev/null)
         
         if [ -z "$clips" ]; then
-            notify-send "Clipboard" "No clipboard history available" -t 3000
-            exit 1
+            # No history yet - show helpful options
+            options="📋 Current Clipboard\n📝 Copy Text\n❓ Help"
+            
+            chosen=$(echo -e "$options" | rofi -dmenu -p "Clipboard (No History)" -i)
+            
+            case "$chosen" in
+                "📋 Current Clipboard")
+                    current=$(wl-paste 2>/dev/null || echo "Clipboard is empty")
+                    echo "$current" | rofi -dmenu -p "Current Clipboard:" -theme-str 'window { width: 600px; }'
+                    ;;
+                "📝 Copy Text")
+                    text=$(echo "" | rofi -dmenu -p "Enter text to copy:" -theme-str 'window { width: 500px; }')
+                    if [ -n "$text" ]; then
+                        echo -n "$text" | wl-copy
+                        notify-send "Clipboard" "Text copied - history will start building" -t 3000
+                    fi
+                    ;;
+                "❓ Help")
+                    notify-send "Clipboard Help" "Copy something (Ctrl+C or select with mouse) to start building history" -t 5000
+                    ;;
+            esac
+            exit 0
         fi
         
-        # Show rofi menu with clipboard items
+        # Normal clipboard history menu
+        clips=$(echo "$clips" | head -20 | cut -c1-100)
+        
         chosen=$(echo "$clips" | rofi -dmenu -p "Clipboard History" -i \
             -theme-str 'window { width: 800px; } listview { lines: 15; }' \
             -theme-str 'element-text { font: "Iosevka Custom 11"; }')
         
         if [ -n "$chosen" ]; then
-            # Decode and copy the selected item
             echo "$chosen" | cliphist decode | wl-copy
             notify-send "Clipboard" "Item copied to clipboard" -t 2000
         fi
@@ -373,18 +370,11 @@
     ];
     
     # Environment variables for optimal Wayland experience
+    # (NVIDIA-specific variables are in nvidia.nix)
     sessionVariables = {
       # Enable Wayland for Electron applications
       NIXOS_OZONE_WL = "1";
-      
-      # NVIDIA Wayland optimization
-      LIBVA_DRIVER_NAME = "nvidia";
       XDG_SESSION_TYPE = "wayland";
-      GBM_BACKEND = "nvidia-drm";
-      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-      
-      # Fix cursor rendering issues with NVIDIA
-      WLR_NO_HARDWARE_CURSORS = "1";
     };
   };
 
@@ -426,8 +416,7 @@
     home.stateVersion = "25.05";
 
     #---------------------------------------------------------------------------
-    # SHELL ENVIRONMENT
-    # Bash configuration with Solarized theme and productivity features
+    # NOTIFICATION SYSTEM
     #---------------------------------------------------------------------------
     services.dunst = {
       enable = true;
@@ -498,6 +487,10 @@
       };
     };
     
+    #---------------------------------------------------------------------------
+    # SHELL ENVIRONMENT
+    # Bash configuration with Solarized theme and productivity features
+    #---------------------------------------------------------------------------
     programs.bash = {
       enable = true;
       
@@ -708,7 +701,7 @@
 
     #---------------------------------------------------------------------------
     # HYPRLAND WINDOW MANAGER
-    # Optimized for BÉPO keyboard layout and NVIDIA graphics
+    # Optimized for BÉPO keyboard layout and graphics
     #---------------------------------------------------------------------------
     
     wayland.windowManager.hyprland = {
@@ -725,15 +718,6 @@
           "waybar"      # Status bar
           "nm-applet"   # Network manager applet
           "wl-paste --watch cliphist store"  # Handles both clipboard and primary selection
-        ];
-
-        # NVIDIA-specific environment variables for optimal Wayland performance
-        env = [
-          "LIBVA_DRIVER_NAME,nvidia"
-          "XDG_SESSION_TYPE,wayland"
-          "GBM_BACKEND,nvidia-drm"
-          "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-          "WLR_NO_HARDWARE_CURSORS,1"
         ];
 
         # Input configuration optimized for BÉPO layout
@@ -757,12 +741,6 @@
           allow_tearing = false;
         };
 
-        # NVIDIA-specific rendering optimizations
-        render = {
-          explicit_sync = 2;
-          explicit_sync_kms = 2;
-        };
-
         # Smooth animations
         animations = {
           enabled = true;
@@ -781,9 +759,7 @@
         misc = {
           force_default_wallpaper = 0;
           disable_hyprland_logo = false;
-          # NVIDIA-specific performance settings
           vfr = true;  # Variable refresh rate
-          vrr = 0;     # Variable refresh rate off (can cause issues)
         };
 
         # Key bindings optimized for BÉPO layout
@@ -801,7 +777,7 @@
           "$mod SHIFT, P, pseudo"                        # Pseudo tiling
           "$mod, J, togglesplit"                         # Toggle split
 
-          # Your existing binds...
+          # Clipboard management
           "$mod, V, exec, clipboard-menu"           # Clipboard history menu
           "$mod SHIFT, V, exec, clipboard-clear"    # Clear clipboard history
 
@@ -1312,12 +1288,6 @@
 
   #=============================================================================
   # SYSTEM VERSION
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It's perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   #=============================================================================
   
   system.stateVersion = "25.05";
