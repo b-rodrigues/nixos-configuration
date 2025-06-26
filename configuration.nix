@@ -523,7 +523,7 @@
           
           modules-left = [ "hyprland/workspaces" ];
           modules-center = [ "clock" ];
-          modules-right = [ "tray" "cpu" "memory" "wireplumber" ];
+          modules-right = [ "tray" "cpu" "memory" "wireplumber" "custom/power" ];
 
           "hyprland/workspaces" = {
             disable-scroll = true;
@@ -550,6 +550,32 @@
             on-click-right = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 100%";
             tooltip = true;
             tooltip-format = "{node_name}";
+          };
+
+          # Power menu module
+          "custom/power" = {
+            format = "⏻";
+            tooltip = false;
+            on-click = "rofi -show power-menu -modi power-menu:${pkgs.writeShellScript "rofi-power-menu" ''
+              #!/bin/sh
+              
+              case $1 in
+                "")
+                  echo "logout"
+                  echo "reboot"
+                  echo "shutdown"
+                  ;;
+                "logout")
+                  hyprctl dispatch exit
+                  ;;
+                "reboot")
+                  systemctl reboot
+                  ;;
+                "shutdown")
+                  systemctl poweroff
+                  ;;
+              esac
+            ''}";
           };
 
           clock = {
@@ -632,6 +658,12 @@
         #clock {
           color: #b58900;
           font-weight: bold;
+        }
+
+        #custom-power {
+          color: #dc322f;  /* Solarized red for power button */
+          font-size: 20px;  /* Increased from 16px to 20px */
+          padding: 0 12px;
         }
 
         #tray {
