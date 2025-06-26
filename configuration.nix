@@ -54,7 +54,7 @@
     xserver.enable = true;
     displayManager = {
       sddm.enable = true;
-      defaultSession = "plasma";
+      defaultSession = "hyprland";
       autoLogin = {
         enable = true;
         user = "brodrigues";
@@ -695,16 +695,7 @@
     programs.rofi = {
       enable = true;
       package = pkgs.rofi-wayland;
-      theme = {
-        "*" = {
-          background-color = "#002b36";
-          foreground-color = "#839496";
-          border-color = "#d33682";
-          separatorcolor = "#073642";
-          selected-normal-foreground = "#fdf6e3";
-          selected-normal-background = "#d33682";
-        };
-      };
+      theme = "solarized_alternate";
     };
   };
 
