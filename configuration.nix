@@ -24,6 +24,51 @@
   };
 
   # ============================================================================
+  # NVIDIA CONFIGURATION
+  # ============================================================================
+  
+  # Enable OpenGL
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
+  # Load nvidia driver for Xorg and Wayland
+  services.xserver.videoDrivers = ["nvidia"];
+
+  hardware.nvidia = {
+    # Modesetting is required for Wayland
+    modesetting.enable = true;
+
+    # Nvidia power management. Experimental, and can cause sleep/suspend to fail.
+    # Enable this if you have graphical corruption issues or application crashes after waking
+    # up from sleep. This fixes it by saving the entire VRAM memory to /tmp/ instead 
+    # of just the bare essentials.
+    powerManagement.enable = false;
+
+    # Fine-grained power management. Turns off GPU when not in use.
+    # Experimental and only works on modern Nvidia GPUs (Turing or newer).
+    powerManagement.finegrained = false;
+
+    # Use the NVidia open source kernel module (not to be confused with the
+    # independent third-party "nouveau" open source driver).
+    # Support is limited to the Turing and later architectures. Full list of 
+    # supported GPUs is at: 
+    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus 
+    # Only available from driver 515.43.04+
+    # Currently alpha-quality/buggy, so false is currently the recommended setting.
+    open = false;
+
+    # Enable the Nvidia settings menu,
+    # accessible via `nvidia-settings`.
+    nvidiaSettings = true;
+
+    # Optionally, you may need to select the appropriate driver version for your specific GPU.
+    # For GTX 1080 (Pascal architecture), use the legacy 470 driver or latest stable
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+  };
+
+  # ============================================================================
   # NETWORKING & LOCALIZATION
   # ============================================================================
   
@@ -53,7 +98,10 @@
   services = {
     xserver.enable = true;
     displayManager = {
-      sddm.enable = true;
+      sddm = {
+        enable = true;
+        wayland.enable = true;  # Enable Wayland support for SDDM
+      };
       defaultSession = "hyprland";
       autoLogin = {
         enable = true;
@@ -144,6 +192,7 @@
       kitty
       krusader
       networkmanagerapplet
+      nvidia-vaapi-driver  # NVIDIA VA-API driver for hardware acceleration
       pavucontrol
       slurp
       swww
@@ -153,7 +202,19 @@
       wl-clipboard
     ];
     
-    sessionVariables.NIXOS_OZONE_WL = "1";
+    sessionVariables = {
+      # Enable Wayland for Electron apps
+      NIXOS_OZONE_WL = "1";
+      
+      # NVIDIA Wayland environment variables
+      LIBVA_DRIVER_NAME = "nvidia";
+      XDG_SESSION_TYPE = "wayland";
+      GBM_BACKEND = "nvidia-drm";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      
+      # Cursor theme workaround for NVIDIA
+      WLR_NO_HARDWARE_CURSORS = "1";
+    };
   };
 
   # ============================================================================
@@ -212,6 +273,10 @@
         rebuild = "sudo nixos-rebuild switch";
         rebuild-test = "sudo nixos-rebuild test";
         rebuild-dry = "sudo nixos-rebuild dry-build";
+        
+        # NVIDIA aliases
+        nvidia-info = "nvidia-smi";
+        nvidia-settings = "nvidia-settings";
       };
       
       bashrcExtra = ''
@@ -386,6 +451,15 @@
           "nm-applet"
         ];
 
+        # NVIDIA-specific environment variables
+        env = [
+          "LIBVA_DRIVER_NAME,nvidia"
+          "XDG_SESSION_TYPE,wayland"
+          "GBM_BACKEND,nvidia-drm"
+          "__GLX_VENDOR_LIBRARY_NAME,nvidia"
+          "WLR_NO_HARDWARE_CURSORS,1"
+        ];
+
         input = {
           kb_layout = "fr";
           kb_variant = "bepo";
@@ -405,6 +479,12 @@
           allow_tearing = false;
         };
 
+        # NVIDIA-specific render settings
+        render = {
+          explicit_sync = 2;
+          explicit_sync_kms = 2;
+        };
+
         animations = {
           enabled = true;
           bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
@@ -421,6 +501,9 @@
         misc = {
           force_default_wallpaper = 0;
           disable_hyprland_logo = false;
+          # NVIDIA-specific settings
+          vfr = true;
+          vrr = 0;
         };
 
         bind = [
