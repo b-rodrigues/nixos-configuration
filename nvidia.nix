@@ -48,8 +48,10 @@
   
   environment.systemPackages = with pkgs; [
     nvidia-vaapi-driver         # Hardware video acceleration
+    vaapiVdpau
+    libvdpau-va-gl
   ];
-
+  
   #=============================================================================
   # NVIDIA-SPECIFIC ENVIRONMENT VARIABLES
   #=============================================================================

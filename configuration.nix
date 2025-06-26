@@ -223,16 +223,27 @@
       htop                        # System monitoring for popup
       btop                        # Better system monitoring
       wget                        # File downloader
+
+      # Screen recording and video tools
+      obs-studio                  # Wayland screen recorder
+      ffmpeg-full                 # Full FFmpeg with all codecs
+      kdePackages.kdenlive
+      mpv
+      
+      # Additional codecs and libraries
+      x264                        # H.264 encoder
+      x265                        # H.265/HEVC encoder
+      libvpx                      # VP8/VP9 codecs
       
       # Wayland Tools
-      sway-contrib.grimshot       # Screenshot tool
+      cliphist
+      grim                        # Needed for delayed area screenshot
       imv                         # Image viewer
       slurp                       # Screen area selection
-      grim                        # Needed for delayed area screenshot
+      sway-contrib.grimshot       # Screenshot tool
       swww                        # Wallpaper manager
       waybar                      # Status bar
       wl-clipboard                # Clipboard utilities
-      cliphist
       
       # Applications
       gimp3                       # Image editor
