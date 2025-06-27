@@ -209,8 +209,8 @@
     systemPackages = with pkgs; [
       # Development & AI Tools
       aider-chat                  # AI-powered coding assistant
-      direnv                      # Environment management
       vim                         # Text editor
+      jq
       
       # Web & Communication
       brave                       # Privacy-focused browser
@@ -394,9 +394,6 @@
   #=============================================================================
   
   programs = {
-    # Enable direnv for all users
-    bash.interactiveShellInit = ''eval "$(direnv hook bash)"'';
-    
     # Hyprland window manager
     hyprland = {
       enable = true;
@@ -497,6 +494,15 @@
         };
       };
     };
+
+    #---------------------------------------------------------------------------
+    # Nix-direnv
+    #---------------------------------------------------------------------------
+    programs.direnv = {
+      enable = true;
+      enableBashIntegration = true;
+      nix-direnv.enable = true;
+    };
     
     #---------------------------------------------------------------------------
     # SHELL ENVIRONMENT
@@ -538,7 +544,7 @@
         export HISTFILESIZE=20000
         export HISTCONTROL=ignoreboth:erasedups
         shopt -s histappend
-        
+
         #=====================================================================
         # SOLARIZED DARK COLOR SCHEME
         #=====================================================================
@@ -708,6 +714,7 @@
     programs.emacs = {
       enable = true;
       package = pkgs.emacs-pgtk;  # Pure GTK build for Wayland
+      extraPackages = epkgs: [ epkgs.vterm ];
     };
 
     #---------------------------------------------------------------------------
