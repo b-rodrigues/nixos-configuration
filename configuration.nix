@@ -207,6 +207,31 @@
   environment = {
     # Core system packages available to all users
     systemPackages = with pkgs; [
+
+      #=============================================================================
+      # Custom Script: nixpr-review (nix-shell for nixpkgs PR review)
+      #=============================================================================
+      (pkgs.writeShellScriptBin "nixpr-review" ''
+        #!/usr/bin/env bash
+        set -e
+        if [ $# -ne 2 ]; then
+          echo "Usage: nixpr-review <nixpkgs-commit-hash> <package-name>"
+          exit 1
+        fi
+        COMMIT_HASH="$1"
+        PACKAGE="$2"
+        NIXPKGS_URL="https://github.com/NixOS/nixpkgs/archive/''${COMMIT_HASH}.tar.gz"
+        NIXPKGS_PATH="nixpkgs-''${COMMIT_HASH}"
+        if [ ! -d "$NIXPKGS_PATH" ]; then
+          echo "Downloading nixpkgs at commit $COMMIT_HASH..."
+          curl -L "$NIXPKGS_URL" -o "''${COMMIT_HASH}.tar.gz"
+          tar -xzf "''${COMMIT_HASH}.tar.gz"
+          rm "''${COMMIT_HASH}.tar.gz"
+        fi
+        echo "Entering nix-shell with nixpkgs at commit $COMMIT_HASH and package $PACKAGE..."
+        nix-shell -I nixpkgs="./$NIXPKGS_PATH" -p "$PACKAGE"
+      '')
+
       # Development & AI Tools
       aider-chat                  # AI-powered coding assistant
       vim                         # Text editor
@@ -243,6 +268,7 @@
       sway-contrib.grimshot       # Screenshot tool
       swww                        # Wallpaper manager
       waybar                      # Status bar
+      hypridle                    # Screensaver
       wl-clipboard                # Clipboard utilities
       
       # Applications
@@ -424,6 +450,26 @@
     home.stateVersion = "25.05";
 
     #---------------------------------------------------------------------------
+    # Hypridle service configuration
+    #---------------------------------------------------------------------------
+    services.hypridle = {
+      enable = true;
+      settings = {
+        general = {
+          ignore_dbus_inhibit = false;
+        };
+
+        listener = [
+          {
+            timeout = 300;                              # 5 minutes
+            on-timeout = "hyprctl dispatch dpms off";   # screen off
+            on-resume = "hyprctl dispatch dpms on";     # screen on
+          }
+        ];
+      };
+    };
+
+    #---------------------------------------------------------------------------
     # NOTIFICATION SYSTEM
     #---------------------------------------------------------------------------
     services.dunst = {
@@ -527,6 +573,7 @@
         
         # NixOS system management
         rebuild = "sudo nixos-rebuild switch";
+        upgrade = "sudo nixos-rebuild switch --upgrade";
         rebuild-test = "sudo nixos-rebuild test";
         rebuild-dry = "sudo nixos-rebuild dry-build";
         
