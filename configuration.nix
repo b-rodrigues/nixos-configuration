@@ -234,6 +234,7 @@
 
       # Development & AI Tools
       aider-chat                  # AI-powered coding assistant
+      air-formatter               # Format R code
       vim                         # Text editor
       jq
       
