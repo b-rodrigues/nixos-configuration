@@ -201,7 +201,7 @@
     packages = with pkgs; [
       kdePackages.kate   # KDE text editor
     ];
-  };
+   };
 
   #=============================================================================
   # PACKAGE MANAGEMENT & SYSTEM PACKAGES
@@ -254,6 +254,7 @@
       libnotify                   # To send notifications
       htop                        # System monitoring for popup
       btop                        # Better system monitoring
+      krusader
       wget                        # File downloader
 
       # Screen recording and video tools
@@ -261,6 +262,8 @@
       ffmpeg-full                 # Full FFmpeg with all codecs
       kdePackages.kdenlive
       mpv
+      vlc
+      themechanger
       
       # Additional codecs and libraries
       x264                        # H.264 encoder
@@ -281,7 +284,6 @@
       # Applications
       gimp3                       # Image editor
       kitty                       # Terminal emulator
-      yazi                        # File manager
 
       # Scripts to put in PATH
       (pkgs.writeShellScriptBin "grimshot-menu" ''
@@ -416,6 +418,11 @@
     # Environment variables for optimal Wayland experience
     # (NVIDIA-specific variables are in nvidia.nix)
     sessionVariables = {
+      QT_QPA_PLATFORMTHEME = "qtct";
+      QT_QPA_PLATFORM = "wayland";
+      GDK_SCALE = "1";         # or "2" for 200% scaling
+      GDK_DPI_SCALE = "1.5";   # 1.5 for 150%, 1 for 100%
+      QT_SCALE_FACTOR = "1.5"; # For Qt X11 apps, if you use any
       # Enable Wayland for Electron applications
       NIXOS_OZONE_WL = "1";
       XDG_SESSION_TYPE = "wayland";
@@ -455,6 +462,19 @@
   
   home-manager.users.brodrigues = { pkgs, ... }: {
     home.stateVersion = "25.05";
+
+    qt = {
+      enable = true;
+      platformTheme.name = "qtct";
+      style.name = "kvantum";
+    };
+    
+    #---------------------------------------------------------------------------
+    # Font scaling for xwayland apps
+    #---------------------------------------------------------------------------
+    xresources.properties = {
+      "Xft.dpi" = "144"; # or "192" for 200% scaling, or "96" for 100% (adjust as needed)
+    };
 
     #---------------------------------------------------------------------------
     # Hypridle service configuration
@@ -771,6 +791,12 @@
       extraPackages = epkgs: [ epkgs.vterm ];
     };
 
+    # Enable the user service
+    services.emacs = {
+      enable = true;
+      client.enable = true;
+    };
+
     #---------------------------------------------------------------------------
     # HYPRLAND WINDOW MANAGER
     # Optimized for BÉPO keyboard layout and graphics
@@ -840,7 +866,7 @@
           "$mod, Return, exec, kitty"                    # Terminal
           "$mod, D, killactive"                          # Close window
           "$mod SHIFT, Q, exit"                          # Exit Hyprland
-          "$mod, F, exec, kitty yazi"                    # File manager
+          "$mod, F, exec, krusader"                    # File manager
           "$mod, Y, fullscreen, 1"                       # Fullscreen
           "$mod, A, togglefloating"                      # Toggle floating
           "$mod, Space, exec, rofi -show drun"           # Application launcher
@@ -918,222 +944,13 @@
           "noinitialfocus, class:^(brave-browser)$"
           "suppressevent activatefocus, class:^(brave-browser)$"
 
-          "workspace 3, class:^(Emacs)$"
-          "noinitialfocus, class:^(Emacs)$"
-          "suppressevent activatefocus, class:^(Emacs)$"
+          "workspace 3, class:^(emacs)$"
+          "noinitialfocus, class:^(emacs)$"
+          "suppressevent activatefocus, class:^(emacs)$"
 
           "workspace 5, class:^(gimp-3.0)$"
           "noinitialfocus, class:^(gimp-3.0)$"
           "suppressevent activatefocus, class:^(gimp-3.0)$"
-        ];
-      };
-    };
-
-    #---------------------------------------------------------------------------
-    # YAZI FILE MANAGER
-    # Configured for BÉPO layout with Emacs integration
-    #---------------------------------------------------------------------------
-
-    programs.yazi = {
-      enable = true;
-      enableBashIntegration = true;
-      
-      settings = {
-        # Manager configuration
-        mgr = {
-          ratio = [ 1 4 3 ];        # Three-column layout
-          sort_by = "natural";       # Natural sorting
-          sort_sensitive = false;
-          sort_reverse = false;
-          sort_dir_first = true;     # Directories first
-          linemode = "none";
-          show_hidden = true;        # Show hidden files
-          show_symlink = true;
-          scrolloff = 5;             # Keep 5 lines visible when scrolling
-          mouse_events = [ "click" "scroll" ];
-          title_format = "Yazi: {cwd}";
-        };
-        
-        # Preview settings
-        preview = {
-          tab_size = 2;
-          max_width = 600;
-          max_height = 900;
-          cache_dir = "";
-          image_filter = "triangle";
-          image_quality = 75;
-          sixel_fraction = 15;
-          ueberzug_scale = 1;
-          ueberzug_offset = [ 0 0 0 0 ];
-        };
-        
-        # File openers
-        opener = {
-          edit = [
-            { run = "emacs -nw \"$@\""; desc = "emacs"; block = true; for = "unix"; }
-          ];
-          open = [
-            { run = "xdg-open \"$1\""; desc = "Open"; for = "linux"; }
-          ];
-          reveal = [
-            { run = "xdg-open \"$(dirname \"$1\")\""; desc = "Reveal"; for = "linux"; }
-          ];
-          edit-gui = [
-            { run = "emacs \"$@\""; desc = "emacs (GUI)"; block = false; for = "unix"; }
-          ];
-        };
-        
-        # File association rules
-        open = {
-          rules = [
-            { name = "*/"; use = [ "edit" "open" "reveal" ]; }
-            { mime = "text/*"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { mime = "image/*"; use = [ "open" "reveal" ]; }
-            { mime = "video/*"; use = [ "open" "reveal" ]; }
-            { mime = "audio/*"; use = [ "open" "reveal" ]; }
-            { mime = "inode/x-empty"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { mime = "application/json"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { mime = "*/javascript"; use = [ "edit" "edit-gui" "reveal" ]; }
-            
-            # Configuration files
-            { name = "*.nix"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { name = "*.toml"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { name = "*.yaml"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { name = "*.yml"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { name = "*.conf"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { name = "*.org"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { name = "*.md"; use = [ "edit" "edit-gui" "reveal" ]; }
-            { mime = "*"; use = [ "open" "reveal" ]; }
-          ];
-        };
-        
-        # Task management
-        tasks = {
-          micro_workers = 10;
-          macro_workers = 25;
-          bizarre_retry = 5;
-          image_alloc = 536870912;  # 512MB
-          image_bound = [ 0 0 ];
-          suppress_preload = false;
-        };
-        
-        log.enabled = false;
-      };
-
-      # BÉPO-optimized key mappings
-      keymap = {
-        mgr.prepend_keymap = [
-          # BÉPO navigation (C-T-S-R instead of H-J-K-L)
-          { on = [ "c" ]; run = "arrow -5"; desc = "Move cursor left"; }
-          { on = [ "r" ]; run = "arrow 5"; desc = "Move cursor right"; }
-          { on = [ "s" ]; run = "arrow -1"; desc = "Move cursor up"; }
-          { on = [ "t" ]; run = "arrow 1"; desc = "Move cursor down"; }
-          
-          # Fast movement
-          { on = [ "C" ]; run = "arrow -999"; desc = "Move to leftmost"; }
-          { on = [ "R" ]; run = "arrow 999"; desc = "Move to rightmost"; }
-          { on = [ "S" ]; run = "arrow -99999"; desc = "Move to top"; }
-          { on = [ "T" ]; run = "arrow 99999"; desc = "Move to bottom"; }
-          
-          # Directory navigation
-          { on = [ "u" ]; run = "leave"; desc = "Go to parent directory"; }
-          { on = [ "i" ]; run = "enter"; desc = "Enter directory"; }
-          
-          # Tab management (matching Hyprland workspaces)
-          { on = [ "<Tab>" ]; run = "tab_create --current"; desc = "Create new tab"; }
-          { on = [ "\"" ]; run = "tab_switch 0"; desc = "Switch to tab 1"; }
-          { on = [ "«" ]; run = "tab_switch 1"; desc = "Switch to tab 2"; }
-          { on = [ "»" ]; run = "tab_switch 2"; desc = "Switch to tab 3"; }
-          { on = [ "(" ]; run = "tab_switch 3"; desc = "Switch to tab 4"; }
-          { on = [ ")" ]; run = "tab_switch 4"; desc = "Switch to tab 5"; }
-          { on = [ "@" ]; run = "tab_switch 5"; desc = "Switch to tab 6"; }
-          { on = [ "+" ]; run = "tab_switch 6"; desc = "Switch to tab 7"; }
-          { on = [ "w" ]; run = "tab_close"; desc = "Close current tab"; }
-          
-          # File operations
-          { on = [ "o" ]; run = "open"; desc = "Open file"; }
-          { on = [ "O" ]; run = "open --interactive"; desc = "Open file with..."; }
-          { on = [ "<Space>" ]; run = "toggle"; desc = "Toggle selection"; }
-          { on = [ "v" ]; run = "visual_mode"; desc = "Enter visual mode"; }
-          { on = [ "V" ]; run = "visual_mode --unset"; desc = "Exit visual mode"; }
-          
-          # Emacs integration
-          { on = [ "e" ]; run = "open --chooser=edit"; desc = "Edit with emacs (terminal)"; }
-          { on = [ "E" ]; run = "open --chooser=edit-gui"; desc = "Edit with emacs (GUI)"; }
-          
-          # File manipulation
-          { on = [ "A" ]; run = "rename --cursor=before_ext"; desc = "Rename"; }
-          
-          # Search functionality
-          { on = [ "/" ]; run = "find --smart"; desc = "Find"; }
-          { on = [ "?" ]; run = "find --previous --smart"; desc = "Find previous"; }
-          { on = [ "n" ]; run = "find_arrow"; desc = "Go to next found"; }
-          { on = [ "N" ]; run = "find_arrow --previous"; desc = "Go to previous found"; }
-          { on = [ "*" ]; run = "search fd"; desc = "Search with fd"; }
-          
-          # Useful shortcuts
-          { on = [ "." ]; run = "hidden toggle"; desc = "Toggle hidden files"; }
-          { on = [ "z" ]; run = "jump zoxide"; desc = "Jump with zoxide"; }
-          { on = [ "g" "g" ]; run = "arrow -99999"; desc = "Move to top"; }
-          { on = [ "G" ]; run = "arrow 99999"; desc = "Move to bottom"; }
-          { on = [ "~" ]; run = "cd ~"; desc = "Go to home directory"; }
-          
-          # Quick directory access
-          { on = [ "g" "c" ]; run = "cd ~/.config"; desc = "Go to config directory"; }
-          { on = [ "g" "n" ]; run = "cd /etc/nixos"; desc = "Go to NixOS config"; }
-          { on = [ "g" "h" ]; run = "cd ~"; desc = "Go to home directory"; }
-          { on = [ "g" "d" ]; run = "cd ~/Downloads"; desc = "Go to Downloads"; }
-          { on = [ "g" "D" ]; run = "cd ~/Documents"; desc = "Go to Documents"; }
-          
-          # Sorting options
-          { on = [ "," "a" ]; run = "sort alphabetical --reverse=no"; desc = "Sort alphabetically"; }
-          { on = [ "," "A" ]; run = "sort alphabetical --reverse"; desc = "Sort alphabetically (reverse)"; }
-          { on = [ "," "c" ]; run = "sort created --reverse=no"; desc = "Sort by creation time"; }
-          { on = [ "," "C" ]; run = "sort created --reverse"; desc = "Sort by creation time (reverse)"; }
-          { on = [ "," "m" ]; run = "sort modified --reverse=no"; desc = "Sort by modified time"; }
-          { on = [ "," "M" ]; run = "sort modified --reverse"; desc = "Sort by modified time (reverse)"; }
-          { on = [ "," "n" ]; run = "sort natural --reverse=no"; desc = "Sort naturally"; }
-          { on = [ "," "N" ]; run = "sort natural --reverse"; desc = "Sort naturally (reverse)"; }
-          { on = [ "," "s" ]; run = "sort size --reverse=no"; desc = "Sort by size"; }
-          { on = [ "," "S" ]; run = "sort size --reverse"; desc = "Sort by size (reverse)"; }
-          
-          # Exit commands
-          { on = [ "q" ]; run = "quit"; desc = "Quit"; }
-          { on = [ "Q" ]; run = "quit --no-cwd-file"; desc = "Quit without saving cwd"; }
-          { on = [ "<C-c>" ]; run = "quit"; desc = "Quit"; }
-        ];
-        
-        # Input mode key bindings
-        input.prepend_keymap = [
-          { on = [ "<C-c>" ]; run = "close"; desc = "Cancel input"; }
-          { on = [ "<Enter>" ]; run = "close --submit"; desc = "Submit input"; }
-          { on = [ "<Esc>" ]; run = "escape"; desc = "Escape input"; }
-          
-          # Emacs-style editing
-          { on = [ "<C-a>" ]; run = "move -999"; desc = "Move to beginning of line"; }
-          { on = [ "<C-e>" ]; run = "move 999"; desc = "Move to end of line"; }
-          { on = [ "<C-d>" ]; run = "delete"; desc = "Delete character"; }
-          { on = [ "<C-h>" ]; run = "backspace"; desc = "Backspace"; }
-          { on = [ "<C-k>" ]; run = "kill"; desc = "Kill to end of line"; }
-          { on = [ "<C-u>" ]; run = "kill --bol"; desc = "Kill to beginning of line"; }
-          { on = [ "<C-w>" ]; run = "kill --backward-word"; desc = "Kill backward word"; }
-          
-          # BÉPO navigation in input mode
-          { on = [ "<C-c>" ]; run = "move -1"; desc = "Move cursor left"; }
-          { on = [ "<C-r>" ]; run = "move 1"; desc = "Move cursor right"; }
-        ];
-        
-        # Selection mode key bindings
-        select.prepend_keymap = [
-          { on = [ "<C-c>" ]; run = "close"; desc = "Cancel selection"; }
-          { on = [ "<Enter>" ]; run = "close --submit"; desc = "Submit selection"; }
-          { on = [ "<Esc>" ]; run = "escape"; desc = "Escape selection"; }
-          
-          # BÉPO navigation in select mode
-          { on = [ "c" ]; run = "arrow -5"; desc = "Move cursor left"; }
-          { on = [ "r" ]; run = "arrow 5"; desc = "Move cursor right"; }
-          { on = [ "s" ]; run = "arrow -1"; desc = "Move cursor up"; }
-          { on = [ "t" ]; run = "arrow 1"; desc = "Move cursor down"; }
         ];
       };
     };
