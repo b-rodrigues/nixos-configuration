@@ -87,6 +87,12 @@
   i18n.defaultLocale = "en_GB.UTF-8";
 
   #=============================================================================
+  # POLICYKIT 
+  #=============================================================================
+
+  security.polkit.enable = true;
+
+  #=============================================================================
   # INPUT CONFIGURATION
   # BÉPO keyboard layout for efficient French typing
   #=============================================================================
@@ -185,7 +191,10 @@
   #=============================================================================
   
   # Enable printing support
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    drivers = [ pkgs.samsung-unified-linux-driver ];
+  };
 
   #=============================================================================
   # USER ACCOUNT CONFIGURATION
@@ -256,6 +265,7 @@
       btop                        # Better system monitoring
       krusader
       wget                        # File downloader
+      lxqt.lxqt-policykit         # LXQT Policykit program
 
       # Screen recording and video tools
       obs-studio                  # Wayland screen recorder
@@ -443,6 +453,7 @@
     # Global Git configuration
     git = {
       enable = true;
+      lfs.enable = true;
       config = {
         user = {
           name = "Bruno Rodrigues";
@@ -816,6 +827,7 @@
           "waybar"      # Status bar
           "nm-applet"   # Network manager applet
           "wl-paste --watch cliphist store"  # Handles both clipboard and primary selection
+          "lxqt-policykit-agent"
         ];
 
         # Input configuration optimized for BÉPO layout
