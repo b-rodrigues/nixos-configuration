@@ -228,23 +228,29 @@
       #=============================================================================
       (pkgs.writeShellScriptBin "nixpr-review" ''
         #!/usr/bin/env bash
+      
+        # Script to enter a nix-shell from a specific nixpkgs commit hash with chosen packages available.
+        # Usage: ./nixpr-review.sh <commit-hash> <package-name1> [<package-name2> ...]
+        # Example: ./nixpr-review.sh 3fae5e2 wget curl git
         set -e
-        if [ $# -ne 2 ]; then
-          echo "Usage: nixpr-review <nixpkgs-commit-hash> <package-name>"
-          exit 1
+        if [ $# -lt 2 ]; then
+            echo "Usage: $0 <nixpkgs-commit-hash> <package-name1> [<package-name2> ...]"
+            exit 1
         fi
         COMMIT_HASH="$1"
-        PACKAGE="$2"
+        shift
+        PACKAGES=("$@")
         NIXPKGS_URL="https://github.com/NixOS/nixpkgs/archive/''${COMMIT_HASH}.tar.gz"
         NIXPKGS_PATH="nixpkgs-''${COMMIT_HASH}"
+      
+        # Download the nixpkgs tarball for the given commit hash if not already present
         if [ ! -d "$NIXPKGS_PATH" ]; then
-          echo "Downloading nixpkgs at commit $COMMIT_HASH..."
-          curl -L "$NIXPKGS_URL" -o "''${COMMIT_HASH}.tar.gz"
-          tar -xzf "''${COMMIT_HASH}.tar.gz"
-          rm "''${COMMIT_HASH}.tar.gz"
+            echo "Downloading nixpkgs at commit $COMMIT_HASH..."
+            curl -L "$NIXPKGS_URL" -o "''${COMMIT_HASH}.tar.gz"
+            tar -xzf "''${COMMIT_HASH}.tar.gz"
+            rm "''${COMMIT_HASH}.tar.gz"
         fi
-        echo "Entering nix-shell with nixpkgs at commit $COMMIT_HASH and package $PACKAGE..."
-        nix-shell -I nixpkgs="./$NIXPKGS_PATH" -p "$PACKAGE"
+        nix-shell -I nixpkgs="./''${NIXPKGS_PATH}" -p "''${PACKAGES[@]}"
       '')
 
       # Development & AI Tools
