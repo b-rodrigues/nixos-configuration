@@ -272,6 +272,7 @@
       krusader
       wget                        # File downloader
       lxqt.lxqt-policykit         # LXQT Policykit program
+      tree
 
       # Screen recording and video tools
       obs-studio                  # Wayland screen recorder
@@ -609,7 +610,7 @@
         l = "ls -CF";
         ".." = "cd ..";
         "..." = "cd ../..";
-        
+
         # Colorized grep commands
         grep = "grep --color=auto";
         fgrep = "fgrep --color=auto";
