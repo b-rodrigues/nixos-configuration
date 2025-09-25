@@ -279,6 +279,7 @@
       wget                        # File downloader
       lxqt.lxqt-policykit         # LXQT Policykit program
       tree
+      ispell
 
       # Screen recording and video tools
       obs-studio                  # Wayland screen recorder
