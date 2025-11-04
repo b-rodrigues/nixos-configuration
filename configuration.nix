@@ -59,7 +59,7 @@
     };
     
     # Always use the latest kernel for best hardware support
-    kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_6_17;
   };
 
   #=============================================================================
@@ -78,6 +78,15 @@
   #=============================================================================
 
   hardware.keyboard.zsa.enable = true;
+
+  #=============================================================================
+  # Docker
+  #=============================================================================
+
+  virtualisation.docker.rootless = {
+    enable = true;
+    setSocketVariable = true;
+  };
 
   #=============================================================================
   # NETWORK & LOCALIZATION
