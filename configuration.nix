@@ -271,6 +271,7 @@
       # Development & AI Tools
       aider-chat                  # AI-powered coding assistant
       air-formatter               # Format R code
+      codex                       # OpenAI Codex
       vim                         # Text editor
       jq
       
