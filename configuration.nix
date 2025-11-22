@@ -29,6 +29,12 @@
   ]);
 
   #=============================================================================
+  # Trusted users
+  #=============================================================================
+
+  nix.trustedUsers = [ "root" "@wheel" ];
+
+  #=============================================================================
   # Garbage collection
   #=============================================================================
 
@@ -317,7 +323,6 @@
       
       # Applications
       gimp3                       # Image editor
-      kitty                       # Terminal emulator
 
       # Scripts to put in PATH
       (pkgs.writeShellScriptBin "grimshot-menu" ''
@@ -800,7 +805,7 @@
       sessionVariables = {
         EDITOR = "emacs";
         BROWSER = "brave";
-        TERMINAL = "kitty";
+        TERMINAL = "ghostty";
       };
       
       # History configuration
@@ -899,7 +904,7 @@
         # Key bindings optimized for BÉPO layout
         bind = [
           # Core application shortcuts
-          "$mod, Return, exec, kitty"                    # Terminal
+          "$mod, Return, exec, ghostty"                    # Terminal
           "$mod, D, killactive"                          # Close window
           "$mod SHIFT, Q, exit"                          # Exit Hyprland
           "$mod, F, exec, krusader"                    # File manager
@@ -1035,7 +1040,7 @@
             interval = 1;
             tooltip = true;
             tooltip-format = "Memory: {used:0.1f}G / {total:0.1f}G ({percentage}%)\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G\n\nClick to open htop for detailed process info";
-            on-click = "kitty htop";
+            on-click = "ghostty htop";
           };
 
           # Audio control
@@ -1194,14 +1199,46 @@
     #---------------------------------------------------------------------------
     
     # Terminal emulator with Solarized theme
-    programs.kitty = {
+    programs.ghostty = {
       enable = true;
-      themeFile = "Solarized_Dark";
+    
+      themes.solarized-dark = {
+        background = "002b36";        # base03
+        foreground = "839496";        # base0
+        cursor-color = "93a1a1";      # base1
+        selection-background = "073642";  # base02
+        selection-foreground = "eee8d5";  # base2
+    
+        palette = [
+          # Normal colors
+          "0=#073642"  # black   (base02)
+          "1=#dc322f"  # red     (red)
+          "2=#859900"  # green   (green)
+          "3=#b58900"  # yellow  (yellow)
+          "4=#268bd2"  # blue    (blue)
+          "5=#d33682"  # magenta (magenta)
+          "6=#2aa198"  # cyan    (cyan)
+          "7=#eee8d5"  # white   (base2)
+    
+          # Bright colors
+          "8=#002b36"  # bright black   (base03)
+          "9=#cb4b16"  # bright red     (orange)
+          "10=#586e75" # bright green   (base01)
+          "11=#657b83" # bright yellow  (base00)
+          "12=#839496" # bright blue    (base0)
+          "13=#6c71c4" # bright magenta (violet)
+          "14=#93a1a1" # bright cyan    (base1)
+          "15=#fdf6e3" # bright white   (base3)
+        ];
+      };
+    
       settings = {
-        font_family = "Iosevka Custom";
-        font_size = 18;
+        theme = "solarized-dark";
+        font-family = "Iosevka Custom";
+        font-size = 16;
       };
     };
+
 
     # Application launcher with Solarized theme
     programs.rofi = {
