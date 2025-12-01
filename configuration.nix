@@ -23,7 +23,6 @@
   imports = [
     ./cachix.nix                    # Binary cache configuration
     ./hardware-configuration.nix    # Hardware-specific settings
-    <home-manager/nixos>            # Home Manager integration
   ] ++ (builtins.filter (f: builtins.pathExists f) [
     ./nvidia.nix                    # NVIDIA configuration (optional)
   ]);
@@ -32,7 +31,13 @@
   # Trusted users
   #=============================================================================
 
-  nix.trustedUsers = [ "root" "@wheel" ];
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+
+  #=============================================================================
+  # Firewall configuration
+  #=============================================================================
+
+  networking.firewall.allowedTCPPorts = [ 8080 ];
 
   #=============================================================================
   # Garbage collection
@@ -86,13 +91,20 @@
   hardware.keyboard.zsa.enable = true;
 
   #=============================================================================
-  # Docker
+  # Docker and virt-manager
   #=============================================================================
 
   virtualisation.docker.rootless = {
     enable = true;
     setSocketVariable = true;
   };
+
+  virtualisation.libvirtd.enable = true;
+  programs.virt-manager.enable = true;
+
+  # Already defined below
+  #users.users.brodrigues.extraGroups = [ "libvirtd" ];
+
 
   #=============================================================================
   # NETWORK & LOCALIZATION
@@ -225,6 +237,7 @@
     isNormalUser = true;
     description = "Bruno Rodrigues";
     extraGroups = [ 
+      "libvirtd"
       "networkmanager"    # Network management permissions
       "wheel"            # Sudo access
     ];
@@ -277,6 +290,7 @@
       # Development & AI Tools
       aider-chat                  # AI-powered coding assistant
       air-formatter               # Format R code
+      antigravity
       codex                       # OpenAI Codex
       vim                         # Text editor
       jq
@@ -639,11 +653,21 @@
         egrep = "egrep --color=auto";
         
         # NixOS system management
-        rebuild = "sudo nixos-rebuild switch";
-        upgrade = "sudo nixos-rebuild switch --upgrade";
-        rebuild-test = "sudo nixos-rebuild test";
-        rebuild-dry = "sudo nixos-rebuild dry-build";
+        # Rebuild the current configuration (using existing flake.lock)
+        rebuild = "sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-config#";
         
+        # Upgrade your system to the latest nixpkgs/home-manager inputs
+        upgrade="cd /home/brodrigues/Documents/repos/nixos-config && nix flake update && sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-config#";
+
+        # Test switch (temporary activation)
+        rebuild-test = "sudo nixos-rebuild test --flake /home/brodrigues/Documents/repos/nixos-config#";
+        
+        # Dry build (no activation)
+        rebuild-dry = "sudo nixos-rebuild dry-build --flake /home/brodrigues/Documents/repos/nixos-config#";
+
+        rollback = "sudo nixos-rebuild switch --rollback";
+        gc = "sudo nix-collect-garbage -d && nix-collect-garbage -d";
+
         # NVIDIA monitoring
         nvidia-info = "nvidia-smi";
         nvidia-settings = "nvidia-settings";
@@ -1243,7 +1267,6 @@
     # Application launcher with Solarized theme
     programs.rofi = {
       enable = true;
-      package = pkgs.rofi-wayland;  # Wayland-native version
       theme = "solarized_alternate";
     };
   };
