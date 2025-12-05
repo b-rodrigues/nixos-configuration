@@ -79,12 +79,6 @@
     "WLR_NO_HARDWARE_CURSORS,1"
   ];
 
-  # NVIDIA-specific rendering optimizations for Hyprland
-  home-manager.users.brodrigues.wayland.windowManager.hyprland.settings.render = {
-    explicit_sync = 2;
-    explicit_sync_kms = 2;
-  };
-
   # NVIDIA-specific misc settings for Hyprland
   home-manager.users.brodrigues.wayland.windowManager.hyprland.settings.misc.vrr = 0;  # Variable refresh rate off (can cause issues)
 }
