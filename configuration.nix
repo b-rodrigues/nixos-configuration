@@ -7,13 +7,13 @@
 # - Optional NVIDIA GPU support (via nvidia.nix if present)
 # - Solarized Dark theme throughout
 # - Development tools (Emacs, Git, direnv)
-# - Modern applications (Brave, GIMP, etc.)
+# - Modern applications (Brave from nixpkgs.unstable, GIMP, etc.)
 #
 # Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running 'nixos-help').
 #===============================================================================
 
-{ config, pkgs, ... }:
+{ config, pkgs, pkgs-unstable, ... }:
 
 {
   #=============================================================================
@@ -296,7 +296,7 @@
       jq
       
       # Web & Communication
-      brave                       # Privacy-focused browser
+      pkgs-unstable.brave                       # Privacy-focused browser
       
       # System Utilities
       cachix                      # Nix binary cache
