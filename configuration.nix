@@ -667,10 +667,6 @@
 
         rollback = "sudo nixos-rebuild switch --rollback";
         gc = "sudo nix-collect-garbage -d && nix-collect-garbage -d";
-
-        # NVIDIA monitoring
-        nvidia-info = "nvidia-smi";
-        nvidia-settings = "nvidia-settings";
       };
       
       # Advanced bash configuration
