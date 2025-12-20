@@ -29,12 +29,9 @@
   # APPLE SILICON SPECIFIC CONFIGURATION
   #=============================================================================
 
-  # Use the Asahi kernel (handled by apple-silicon-support module)
-  # Peripheral firmware is auto-loaded from EFI partition
-  hardware.asahi = {
-    useExperimentalGPUDriver = true;
-    experimentalGPUInstallMode = "replace";  # or "overlay" if you prefer
-  };
+  # GPU support is now in mainline mesa, no extra config needed
+  # Firmware copied from /boot/asahi into repo for flake compatibility
+  hardware.asahi.peripheralFirmwareDirectory = ./firmware;
 
   #=============================================================================
   # Trusted users
