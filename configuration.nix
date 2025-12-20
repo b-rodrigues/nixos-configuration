@@ -314,7 +314,7 @@
       # Screen recording and video tools
       obs-studio                  # Wayland screen recorder
       ffmpeg-full                 # Full FFmpeg with all codecs
-      kdePackages.kdenlive
+      shotcut
       mpv
       vlc
       themechanger
