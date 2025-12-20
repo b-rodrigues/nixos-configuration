@@ -139,6 +139,7 @@
   services.xserver.xkb = {
     layout = "fr";
     variant = "bepo";
+    options = "caps:escape";
   };
   
   console.keyMap = "fr";
@@ -610,10 +611,10 @@
         egrep = "egrep --color=auto";
         
         # NixOS system management - updated for Apple Silicon
-        rebuild = "sudo nixos-rebuild switch --flake /home/brodrigues/nixos-config#macbook";
-        upgrade = "cd /home/brodrigues/nixos-config && nix flake update && sudo nixos-rebuild switch --flake /home/brodrigues/nixos-config#macbook";
-        rebuild-test = "sudo nixos-rebuild test --flake /home/brodrigues/nixos-config#macbook";
-        rebuild-dry = "sudo nixos-rebuild dry-build --flake /home/brodrigues/nixos-config#macbook";
+        rebuild = "sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
+        upgrade = "cd /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon && nix flake update && sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
+        rebuild-test = "sudo nixos-rebuild test --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
+        rebuild-dry = "sudo nixos-rebuild dry-build --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
         rollback = "sudo nixos-rebuild switch --rollback";
         gc = "sudo nix-collect-garbage -d && nix-collect-garbage -d";
       };
