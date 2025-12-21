@@ -57,6 +57,26 @@
         "type": "github"
       }
     },
+    "iosevka-custom": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1766334525,
+        "narHash": "sha256-Jc7YZxF5sGSfTYVv8qR4XrNv1qsxI8OnuwOoPgn/Wm8=",
+        "owner": "b-rodrigues",
+        "repo": "iosevka_custom",
+        "rev": "6bafc0bff3c2bb258e059acf7ec5d8d6e5f3f7be",
+        "type": "github"
+      },
+      "original": {
+        "owner": "b-rodrigues",
+        "repo": "iosevka_custom",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1765838191,
@@ -93,6 +113,7 @@
       "inputs": {
         "apple-silicon-support": "apple-silicon-support",
         "home-manager": "home-manager",
+        "iosevka-custom": "iosevka-custom",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable"
       }

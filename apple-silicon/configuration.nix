@@ -272,6 +272,7 @@
 
       # Development & AI Tools
       aider-chat
+      antigravity
       vim
       jq
       
@@ -806,10 +807,14 @@
         input = {
           kb_layout = "fr";
           kb_variant = "bepo";
+          kb_options = "caps:escape";
           follow_mouse = 1;
           repeat_delay = 300;
           repeat_rate = 50;
-          touchpad.natural_scroll = false;
+          touchpad = {
+            natural_scroll = false;
+            disable_while_typing = true;
+          };
         };
 
         general = {
