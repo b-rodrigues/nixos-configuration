@@ -273,7 +273,6 @@
       # Development & AI Tools
       aider-chat
       antigravity
-      vim
       jq
       
       # Web & Communication
@@ -1176,6 +1175,39 @@
       enable = true;
       theme = "solarized_alternate";
     };
+
+
+  programs.vim = {
+    enable = true;
+    settings = {
+      number = true;
+      relativenumber = false;
+    };
+    extraConfig = ''
+      " BÉPO navigation (ctsr instead of hjkl)
+      noremap c h
+      noremap t j
+      noremap s k
+      noremap r l
+  
+      " Remap original functions
+      noremap h c
+      noremap j t
+      noremap k s
+      noremap l r
+  
+      " Capital versions
+      noremap C H
+      noremap T J
+      noremap S K
+      noremap R L
+      noremap H C
+      noremap J T
+      noremap K S
+      noremap L R
+    '';
+  };
+
   };
 
   #=============================================================================
