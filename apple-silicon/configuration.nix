@@ -793,7 +793,8 @@
       enable = true;
       settings = {
         "$mod" = "SUPER";
-        
+
+        # Monitor configuration
         monitor = ",preferred,auto,auto";
 
         exec-once = [
@@ -818,7 +819,7 @@
 
         general = {
           gaps_in = 5;
-          gaps_out = 10;
+          gaps_out = "0,10,10,10";  # top,right,bottom,left - no top gap for notch
           border_size = 2;
           "col.active_border" = "rgb(d33682)";
           "col.inactive_border" = "rgb(586e75)";
@@ -942,6 +943,10 @@
           position = "top";
           height = 40;
           spacing = 4;
+          margin-top = 0;    # Extend to notch area
+          margin-bottom = 0;
+          margin-left = 0;
+          margin-right = 0;
           
           modules-left = [ "hyprland/workspaces" ];
           modules-center = [ ];
