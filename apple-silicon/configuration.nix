@@ -91,6 +91,9 @@
 
   hardware.keyboard.zsa.enable = true;
 
+  # Compressed RAM swap, very fast
+  zramSwap.enable = true;
+
   #=============================================================================
   # Docker (rootless works on Apple Silicon)
   #=============================================================================
