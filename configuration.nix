@@ -1032,8 +1032,8 @@
           
           # Module arrangement
           modules-left = [ "hyprland/workspaces" ];
-          modules-center = [ "clock" ];
-          modules-right = [ "tray" "cpu" "memory" "wireplumber" "custom/power" ];
+          modules-center = [ ];
+          modules-right = [ "tray" "cpu" "memory" "wireplumber" "clock" "custom/power" ];
 
           # Workspace indicator
           "hyprland/workspaces" = {
@@ -1102,8 +1102,8 @@
           # Clock with calendar
           clock = {
             timezone = "Europe/Luxembourg";
-            format = "{:%Y-%m-%d %H:%M:%S}";
-            interval = 1;
+            format = "{:%d-%m\n%H:%M}";
+            interval = 60;
             on-click = "show-calendar";
             tooltip-format = "<span>{calendar}</span>";
             calendar = {
@@ -1191,6 +1191,8 @@
         #clock {
           color: #b58900;                   /* Solarized yellow */
           font-weight: bold;
+          font-size: 11px;
+          line-height: 1.2;
         }
 
         #custom-power {
