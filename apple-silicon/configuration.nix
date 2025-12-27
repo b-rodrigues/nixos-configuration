@@ -74,6 +74,10 @@
       efi.canTouchEfiVariables = false;
     };
     # Kernel is provided by apple-silicon-support module - don't override it
+    
+    # Enable the screen area around the MacBook notch
+    # This makes the "ears" beside the notch usable for status bars
+    kernelParams = [ "apple_dcp.show_notch=1" ];
   };
 
   #=============================================================================
@@ -490,7 +494,7 @@
       platformTheme.name = "qtct";
       style.name = "kvantum";
     };
-    
+
     xresources.properties = {
       "Xft.dpi" = "144";
     };
@@ -801,7 +805,7 @@
 
         exec-once = [
           "waybar"
-          "nm-applet"   # Network manager applet
+          "nm-applet --indicator"   # Network manager applet (--indicator needed for tray)
           "wl-paste --watch cliphist store"
           "lxqt-policykit-agent"
         ];
@@ -820,9 +824,9 @@
         };
 
         general = {
-          gaps_in = 5;
-          gaps_out = 10;
-          border_size = 2;
+          gaps_in = 2;
+          gaps_out = 5;
+          border_size = 1;
           "col.active_border" = "rgb(d33682)";
           "col.inactive_border" = "rgb(586e75)";
           layout = "master";
@@ -943,12 +947,15 @@
         mainBar = {
           layer = "top";
           position = "top";
-          height = 40;
-          spacing = 4;
+          # Height matches the MacBook M2 notch area (~56px at native resolution)
+          # Adjusted for your 1.5x scaling factor
+          height = 28;
+          spacing = 2;
           
-          modules-left = [ "hyprland/workspaces" ];
-          modules-center = [ "clock" ];
-          modules-right = [ "tray" "cpu" "memory" "battery" "wireplumber" "custom/power" ];
+          # Layout optimized for notch: content on sides, center is empty (notch area)
+          modules-left = [ "hyprland/workspaces" "tray" ];
+          modules-center = [];  # Empty - this is where the notch sits
+          modules-right = [ "cpu" "memory" "battery" "wireplumber" "clock" "custom/power" ];
 
           "hyprland/workspaces" = {
             disable-scroll = true;
@@ -957,7 +964,7 @@
           };
 
           cpu = {
-            format = "{usage}%";
+            format = "cpu: {usage}%";
             tooltip-format = "CPU: {usage}%";
             interval = 1;
             states = {
@@ -967,7 +974,7 @@
           };
 
           memory = {
-            format = " {used:0.1f}G/{total:0.1f}G";
+            format = "mem: {used:0.1f}G";
             interval = 1;
             tooltip = true;
             tooltip-format = "Memory: {used:0.1f}G / {total:0.1f}G ({percentage}%)";
@@ -975,9 +982,9 @@
           };
 
           battery = {
-            format = "{icon} {capacity}%";
+            format = "bat: {icon} {capacity}%";
             format-icons = ["" "" "" "" ""];
-            format-charging = "⚡ {capacity}%";
+            format-charging = "bat: ⚡ {capacity}%";
             states = {
               warning = 30;
               critical = 15;
@@ -985,8 +992,8 @@
           };
 
           wireplumber = {
-            format = "Vol: {volume}%";
-            format-muted = "Muted";
+            format = "vol: {volume}%";
+            format-muted = "vol: muted";
             scroll-step = 5;
             on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
             on-click-right = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 100%";
@@ -1021,8 +1028,8 @@
 
           clock = {
             timezone = "Europe/Luxembourg";
-            format = "{:%Y-%m-%d %H:%M:%S}";
-            interval = 1;
+            format = "{:%m-%d %H:%M}";
+            interval = 60;
             on-click = "show-calendar";
             tooltip-format = "<span>{calendar}</span>";
             calendar = {
@@ -1041,7 +1048,7 @@
       style = ''
         * {
           font-family: "Iosevka Custom", monospace;
-          font-size: 14px;
+          font-size: 11px;
           border: none;
           border-radius: 0;
           min-height: 0;
@@ -1049,14 +1056,14 @@
 
         window#waybar {
           background-color: #002b36;
-          border-bottom: 3px solid #073642;
+          border-bottom: 2px solid #073642;
           color: #839496;
           transition-property: background-color;
           transition-duration: .5s;
         }
 
         #workspaces button {
-          padding: 0 8px;
+          padding: 0 5px;
           background-color: transparent;
           color: #586e75;
           border: none;
@@ -1071,14 +1078,14 @@
         #workspaces button.active {
           background-color: #d33682;
           color: #fdf6e3;
-          border-bottom: 3px solid #dc322f;
+          border-bottom: 2px solid #dc322f;
         }
 
         #cpu, #memory, #clock, #wireplumber, #tray, #battery {
-          padding: 0 10px;
+          padding: 0 6px;
           color: #839496;
-          margin: 0 2px;
-          font-size: 20px;
+          margin: 0 1px;
+          font-size: 13px;
         }
 
         #cpu {
@@ -1112,16 +1119,19 @@
         #clock {
           color: #b58900;
           font-weight: bold;
+          padding: 0 4px;
+          min-width: 0;
         }
 
         #custom-power {
           color: #dc322f;
-          font-size: 20px;
-          padding: 0 12px;
+          font-size: 13px;
+          padding: 0 8px;
         }
 
         #tray {
           color: #6c71c4;
+          margin-left: 15px;
         }
 
         tooltip {
