@@ -448,8 +448,9 @@
     ];
     
     sessionVariables = {
-      QT_QPA_PLATFORMTHEME = "qtct";
+      QT_QPA_PLATFORMTHEME = "kde";
       QT_QPA_PLATFORM = "wayland";
+      QT_STYLE_OVERRIDE = "breeze";
       GDK_SCALE = "1";
       GDK_DPI_SCALE = "1.5";
       QT_SCALE_FACTOR = "1.5";
@@ -491,9 +492,179 @@
 
     qt = {
       enable = true;
-      platformTheme.name = "qtct";
-      style.name = "kvantum";
+      platformTheme.name = "kde";
+      style.name = "breeze";
     };
+
+    # Install Breeze themes and icons for Qt apps (Qt6 only, Plasma 6 handles Qt5 fallback)
+    home.packages = with pkgs; [
+      kdePackages.breeze
+      kdePackages.breeze-icons
+    ];
+
+    # Solarized Dark color scheme for KDE/Qt apps
+    xdg.configFile."kdeglobals" = {
+      force = true;
+      text = ''
+      [ColorEffects:Disabled]
+      Color=0,43,54
+      ColorAmount=0
+      ColorEffect=0
+      ContrastAmount=0.65
+      ContrastEffect=1
+      IntensityAmount=0.1
+      IntensityEffect=2
+
+      [ColorEffects:Inactive]
+      ChangeSelectionColor=true
+      Color=88,110,117
+      ColorAmount=0.025
+      ColorEffect=2
+      ContrastAmount=0.1
+      ContrastEffect=2
+      Enable=false
+      IntensityAmount=0
+      IntensityEffect=0
+
+      [Colors:Button]
+      BackgroundAlternate=0,43,54
+      BackgroundNormal=7,54,66
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:Complementary]
+      BackgroundAlternate=0,43,54
+      BackgroundNormal=7,54,66
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:Header]
+      BackgroundAlternate=7,54,66
+      BackgroundNormal=7,54,66
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:Header][Inactive]
+      BackgroundAlternate=7,54,66
+      BackgroundNormal=7,54,66
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:Selection]
+      BackgroundAlternate=0,43,54
+      BackgroundNormal=38,139,210
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=131,148,150
+      ForegroundInactive=88,110,117
+      ForegroundLink=147,161,161
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:Tooltip]
+      BackgroundAlternate=7,54,66
+      BackgroundNormal=7,54,66
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:View]
+      BackgroundAlternate=7,54,66
+      BackgroundNormal=0,43,54
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [Colors:Window]
+      BackgroundAlternate=7,54,66
+      BackgroundNormal=7,54,66
+      DecorationFocus=38,139,210
+      DecorationHover=38,139,210
+      ForegroundActive=38,139,210
+      ForegroundInactive=88,110,117
+      ForegroundLink=38,139,210
+      ForegroundNegative=220,50,47
+      ForegroundNeutral=203,75,22
+      ForegroundNormal=131,148,150
+      ForegroundPositive=133,153,0
+      ForegroundVisited=108,113,196
+
+      [General]
+      ColorScheme=SolarizedDark
+      Name=Breeze Solarized Dark
+      shadeSortColumn=true
+
+      [KDE]
+      contrast=4
+
+      [WM]
+      activeBackground=7,54,66
+      activeBlend=131,148,150
+      activeForeground=131,148,150
+      inactiveBackground=7,54,66
+      inactiveBlend=88,110,117
+      inactiveForeground=88,110,117
+    '';
+    };
+
+  gtk = {
+    enable = true;
+
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+  };
+
 
     xresources.properties = {
       "Xft.dpi" = "144";
@@ -953,9 +1124,9 @@
           spacing = 2;
           
           # Layout optimized for notch: content on sides, center is empty (notch area)
-          modules-left = [ "hyprland/workspaces" "tray" ];
+          modules-left = [ "hyprland/workspaces" ];
           modules-center = [];  # Empty - this is where the notch sits
-          modules-right = [ "cpu" "memory" "battery" "wireplumber" "clock" "custom/power" ];
+          modules-right = [ "cpu" "memory" "battery" "wireplumber" "clock" "tray" "custom/power" ];
 
           "hyprland/workspaces" = {
             disable-scroll = true;
