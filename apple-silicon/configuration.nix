@@ -299,6 +299,8 @@
       fastfetch
       brightnessctl               # For laptop brightness control
       networkmanagerapplet        # Network management GUI
+      fd                          # Fast find alternative (used by fzf)
+      ripgrep                     # Fast grep alternative
 
       # Screen recording and video tools
       obs-studio
@@ -443,6 +445,77 @@
         if [ "$choice" = "Yes" ]; then
             cliphist wipe
             notify-send "Clipboard" "History cleared" -t 2000
+        fi
+      '')
+
+      (pkgs.writeShellScriptBin "rofi-files" ''
+        #!/bin/sh
+        # Fuzzy file finder using fd + rofi
+        # Opens selected file in default application or editor
+        
+        # Get search directory (default to home)
+        search_dir="''${1:-$HOME}"
+        
+        # Use fd to find files, pipe to rofi for selection
+        selected=$(${pkgs.fd}/bin/fd --type f --hidden --follow --exclude .git . "$search_dir" | \
+          rofi -dmenu -p "Find file" -i \
+            -theme-str 'window { width: 800px; }' \
+            -theme-str 'listview { lines: 20; }')
+        
+        if [ -n "$selected" ]; then
+          # Determine file type and open appropriately
+          mime_type=$(file --mime-type -b "$selected")
+          
+          case "$mime_type" in
+            text/*|application/json|application/xml|application/javascript)
+              # Open text files in emacsclient
+              emacsclient -n "$selected" || emacs "$selected" &
+              ;;
+            image/*)
+              imv "$selected" &
+              ;;
+            video/*|audio/*)
+              mpv "$selected" &
+              ;;
+            application/pdf)
+              xdg-open "$selected" &
+              ;;
+            *)
+              # Default: try xdg-open
+              xdg-open "$selected" &
+              ;;
+          esac
+        fi
+      '')
+
+      (pkgs.writeShellScriptBin "rofi-grep" ''
+        #!/bin/sh
+        # Fuzzy content search using ripgrep + rofi
+        # Search for text in files and open the result
+        
+        search_dir="''${1:-$HOME}"
+        
+        # Get search query from rofi
+        query=$(echo "" | rofi -dmenu -p "Search text" -i \
+          -theme-str 'window { width: 500px; }')
+        
+        if [ -n "$query" ]; then
+          # Search with ripgrep, format output, pipe to rofi
+          selected=$(${pkgs.ripgrep}/bin/rg --line-number --color=never "$query" "$search_dir" 2>/dev/null | \
+            head -200 | \
+            rofi -dmenu -p "Results" -i \
+              -theme-str 'window { width: 1000px; }' \
+              -theme-str 'listview { lines: 20; }' \
+              -theme-str 'element-text { font: "Iosevka Custom 10"; }')
+          
+          if [ -n "$selected" ]; then
+            # Parse file:line format
+            file=$(echo "$selected" | cut -d: -f1)
+            line=$(echo "$selected" | cut -d: -f2)
+            
+            # Open in emacs at specific line
+            emacsclient -n "+$line" "$file" || emacs "+$line" "$file" &
+          fi
         fi
       '')
     ];
@@ -807,92 +880,10 @@
         shopt -s histappend
 
         #=====================================================================
-        # SOLARIZED DARK COLOR SCHEME
+        # SOLARIZED DARK COLOR SCHEME FOR LS
         #=====================================================================
         
         export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
-        
-        SOL_YELLOW="\[\033[38;5;136m\]"
-        SOL_ORANGE="\[\033[38;5;166m\]"
-        SOL_RED="\[\033[38;5;160m\]"
-        SOL_MAGENTA="\[\033[38;5;125m\]"
-        SOL_VIOLET="\[\033[38;5;61m\]"
-        SOL_BLUE="\[\033[38;5;33m\]"
-        SOL_CYAN="\[\033[38;5;37m\]"
-        SOL_GREEN="\[\033[38;5;64m\]"
-        SOL_BASE0="\[\033[38;5;244m\]"
-        RESET="\[\033[0m\]"
-        
-        #=====================================================================
-        # INTELLIGENT GIT PROMPT
-        #=====================================================================
-        git_prompt_info() {
-          local git_dir git_branch git_status
-          
-          if git_dir=$(git rev-parse --git-dir 2>/dev/null); then
-            git_branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
-            
-            git_status=""
-            
-            if ! git diff --quiet 2>/dev/null; then
-              git_status+="*"
-            fi
-            
-            if ! git diff --cached --quiet 2>/dev/null; then
-              git_status+="+"
-            fi
-            
-            if [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
-              git_status+="?"
-            fi
-            
-            local ahead behind
-            ahead=$(git rev-list --count @{upstream}..HEAD 2>/dev/null || echo "0")
-            behind=$(git rev-list --count HEAD..@{upstream} 2>/dev/null || echo "0")
-            
-            if [ "$ahead" -gt 0 ]; then
-              git_status+="↑$ahead"
-            fi
-            
-            if [ "$behind" -gt 0 ]; then
-              git_status+="↓$behind"
-            fi
-            
-            local git_color
-            if [ -n "$git_status" ]; then
-              git_color="$SOL_RED"
-            else
-              git_color="$SOL_GREEN"
-            fi
-            
-            echo -e " ''${git_color}(''${git_branch}''${git_status})$RESET"
-          fi
-        }
-        
-        #=====================================================================
-        # DYNAMIC PROMPT GENERATION
-        #=====================================================================
-        __prompt_command() {
-          local git_info nix_prefix user_color host_color at_color
-          git_info=$(git_prompt_info)
-          
-          if [ -n "$IN_NIX_SHELL" ]; then
-            nix_prefix="nix-shell "
-            user_color="$SOL_RED"
-            host_color="$SOL_RED"
-            at_color="$SOL_RED"
-          else
-            nix_prefix=""
-            user_color="$SOL_GREEN"
-            host_color="$SOL_GREEN"
-            at_color="$SOL_BASE0"
-          fi
-          
-          PS1="''${nix_prefix}''${user_color}\u''${at_color}@''${host_color}\h''${RESET}:''${SOL_BLUE}\w''${git_info}''${RESET}\$ "
-        }
-
-        PROMPT_COMMAND="__prompt_command"
-        __prompt_command
         
         #=====================================================================
         # UTILITY FUNCTIONS
@@ -905,7 +896,85 @@
         gst() {
           git status --short --branch
         }
+
+        keys() {
+          echo ""
+          echo -e "\033[1;33m╭──────────────────────────────────────────────────────╮\033[0m"
+          echo -e "\033[1;33m│\033[0m \033[1;36m Terminal Shortcuts (fzf)\033[0m                          \033[1;33m│\033[0m"
+          echo -e "\033[1;33m├──────────────────────────────────────────────────────┤\033[0m"
+          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+T\033[0m     Fuzzy find file, cd to its directory                   \033[1;33m│\033[0m"
+          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+F\033[0m     Fuzzy find file (insert path)           \033[1;33m│\033[0m"
+          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+Y\033[0m     Fuzzy find file (copy to clipboard)     \033[1;33m│\033[0m"
+          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+R\033[0m     Fuzzy search command history            \033[1;33m│\033[0m"
+          echo -e "\033[1;33m╰──────────────────────────────────────────────────────╯\033[0m"
+          echo ""
+          echo -e "\033[1;35m╭──────────────────────────────────────────────────────╮\033[0m"
+          echo -e "\033[1;35m│\033[0m \033[1;36m Hyprland Shortcuts\033[0m                                 \033[1;35m│\033[0m"
+          echo -e "\033[1;35m├──────────────────────────────────────────────────────┤\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+O\033[0m    Find files (rofi)                       \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+G\033[0m    Search text in files (rofi+grep)        \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+V\033[0m    Clipboard history                       \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+P\033[0m    Screenshot menu                         \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+Space\033[0m Application launcher (rofi)            \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+L\033[0m    Window switcher (rofi)                  \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+F\033[0m    File manager (Krusader)                 \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+Return\033[0m Terminal (Ghostty)                    \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+D\033[0m    Kill window                             \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+Y\033[0m    Fullscreen                              \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;32mSuper+A\033[0m    Toggle floating                         \033[1;35m│\033[0m"
+          echo -e "\033[1;35m├──────────────────────────────────────────────────────┤\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;34mSuper+C/T/S/R\033[0m  Move focus (BÉPO: left/down/up/right)\033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;34mSuper+Shift+C/T/S/R\033[0m  Move window                    \033[1;35m│\033[0m"
+          echo -e "\033[1;35m│\033[0m  \033[1;34mSuper+\" « » ( ) @ +\033[0m  Workspaces 1-7                 \033[1;35m│\033[0m"
+          echo -e "\033[1;35m╰──────────────────────────────────────────────────────╯\033[0m"
+          echo ""
+          echo -e "\033[1;32m╭──────────────────────────────────────────────────────╮\033[0m"
+          echo -e "\033[1;32m│\033[0m \033[1;36m NixOS Commands\033[0m                                     \033[1;32m│\033[0m"
+          echo -e "\033[1;32m├──────────────────────────────────────────────────────┤\033[0m"
+          echo -e "\033[1;32m│\033[0m  \033[1;33mrebuild\033[0m    Rebuild NixOS configuration              \033[1;32m│\033[0m"
+          echo -e "\033[1;32m│\033[0m  \033[1;33mupgrade\033[0m    Update flake and rebuild                 \033[1;32m│\033[0m"
+          echo -e "\033[1;32m│\033[0m  \033[1;33mrollback\033[0m   Rollback to previous generation         \033[1;32m│\033[0m"
+          echo -e "\033[1;32m│\033[0m  \033[1;33mgc\033[0m         Garbage collect old generations         \033[1;32m│\033[0m"
+          echo -e "\033[1;32m╰──────────────────────────────────────────────────────╯\033[0m"
+          echo ""
+        }
         
+        #=====================================================================
+        # CUSTOM FZF FILE FINDER (Ctrl+F inserts file path)
+        #=====================================================================
+        __fzf_file_widget() {
+          local selected
+          selected=$(fd --type f --hidden --follow --exclude .git | fzf --height 40% --reverse)
+          if [ -n "$selected" ]; then
+            READLINE_LINE="''${READLINE_LINE:0:$READLINE_POINT}$selected''${READLINE_LINE:$READLINE_POINT}"
+            READLINE_POINT=$((READLINE_POINT + ''${#selected}))
+          fi
+        }
+        bind -x '"\C-f": __fzf_file_widget'
+
+        # Ctrl+Y: Fuzzy find file and copy path to clipboard
+        __fzf_copy_widget() {
+          local selected
+          selected=$(fd --type f --hidden --follow --exclude .git | fzf --height 40% --reverse)
+          if [ -n "$selected" ]; then
+            echo -n "$selected" | wl-copy
+            echo "Copied: $selected"
+          fi
+        }
+        bind -x '"\C-y": __fzf_copy_widget'
+
+        # Ctrl+T: Fuzzy find file and cd to its parent directory
+        __fzf_cd_widget() {
+          local selected
+          selected=$(fd --type f --hidden --follow --exclude .git | fzf --height 40% --reverse)
+          if [ -n "$selected" ]; then
+            local dir
+            dir=$(dirname "$selected")
+            cd "$dir" && echo "cd $dir"
+          fi
+        }
+        bind -x '"\C-t": __fzf_cd_widget'
+
         #=====================================================================
         # BASH COMPLETION
         #=====================================================================
@@ -916,6 +985,40 @@
             . /etc/bash_completion
           fi
         fi
+      '';
+      
+      # initExtra runs AFTER bashrcExtra - all custom fzf keybindings go here
+      initExtra = ''
+        # Set fzf default options with solarized colors
+        export FZF_DEFAULT_OPTS="--height 40% --reverse --color=bg+:#073642,bg:#002b36,spinner:#2aa198,hl:#268bd2,fg:#839496,header:#268bd2,info:#b58900,pointer:#2aa198,marker:#2aa198,fg+:#eee8d5,prompt:#b58900,hl+:#268bd2"
+        export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+
+        # Ctrl+T: Fuzzy find file and cd to its parent directory
+        __fzf_cd_to_file_dir() {
+          local selected
+          selected=$(fd --type f --hidden --follow --exclude .git | fzf)
+          if [ -n "$selected" ]; then
+            local dir
+            dir=$(dirname "$selected")
+            builtin cd "$dir"
+            # Clear readline and force prompt refresh
+            READLINE_LINE=""
+            READLINE_POINT=0
+            echo "cd $dir"
+          fi
+        }
+        bind -x '"\\C-t": __fzf_cd_to_file_dir'
+
+        # Ctrl+R: Fuzzy search command history
+        __fzf_history_widget() {
+          local selected
+          selected=$(HISTTIMEFORMAT= history | fzf --tac --no-sort | sed 's/^[ ]*[0-9]*[ ]*//')
+          if [ -n "$selected" ]; then
+            READLINE_LINE="$selected"
+            READLINE_POINT=''${#selected}
+          fi
+        }
+        bind -x '"\\C-r": __fzf_history_widget'
       '';
       
       profileExtra = ''
@@ -946,6 +1049,166 @@
     programs.autojump = {
       enable = true;
       enableBashIntegration = true;
+    };
+
+    programs.fzf = {
+      enable = true;
+      # Disable fzf's bash integration - we set up our own keybindings in initExtra
+      enableBashIntegration = false;
+      defaultCommand = "fd --type f --hidden --follow --exclude .git";
+      changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
+      colors = {
+        "bg+" = "#073642";
+        bg = "#002b36";
+        spinner = "#2aa198";
+        hl = "#268bd2";
+        fg = "#839496";
+        header = "#268bd2";
+        info = "#b58900";
+        pointer = "#2aa198";
+        marker = "#2aa198";
+        "fg+" = "#eee8d5";
+        prompt = "#b58900";
+        "hl+" = "#268bd2";
+      };
+    };
+
+    programs.starship = {
+      enable = true;
+      enableBashIntegration = true;
+      settings = {
+        # Solarized Dark color palette
+        palette = "solarized_dark";
+        palettes.solarized_dark = {
+          base03 = "#002b36";
+          base02 = "#073642";
+          base01 = "#586e75";
+          base00 = "#657b83";
+          base0 = "#839496";
+          base1 = "#93a1a1";
+          base2 = "#eee8d5";
+          base3 = "#fdf6e3";
+          yellow = "#b58900";
+          orange = "#cb4b16";
+          red = "#dc322f";
+          magenta = "#d33682";
+          violet = "#6c71c4";
+          blue = "#268bd2";
+          cyan = "#2aa198";
+          green = "#859900";
+        };
+
+        # Two-line prompt format:
+        # Line 1: Language versions, jobs, duration, status, time (info line)
+        # Line 2: nix-shell, path, git info, $ (main prompt)
+        format = "$rlang$python$rust$jobs$cmd_duration$status$time$line_break$nix_shell$directory$git_branch$git_status$character";
+
+        character = {
+          success_symbol = "[\\$](green)";
+          error_symbol = "[\\$](red)";
+        };
+
+        username = {
+          style_user = "green bold";
+          style_root = "red bold";
+          format = "[$user]($style)";
+          show_always = true;
+        };
+
+        hostname = {
+          ssh_only = false;
+          format = "[@$hostname](base0):";
+          disabled = false;
+        };
+
+        directory = {
+          style = "blue bold";
+          truncation_length = 100;  # Effectively show full path
+          truncate_to_repo = false;  # Don't truncate, show full path
+          fish_style_pwd_dir_length = 1;  # When truncating, use fish style (1 char per dir)
+          truncation_symbol = "";
+        };
+
+        git_branch = {
+          symbol = "";
+          style = "green";
+          format = " [($branch)]($style)";
+        };
+
+        git_status = {
+          style = "red bold";
+          format = "[$all_status$ahead_behind]($style)";
+          conflicted = "=";
+          ahead = "↑$count";
+          behind = "↓$count";
+          diverged = "↕";
+          untracked = "?";
+          stashed = "≡";
+          modified = "*";
+          staged = "+";
+          renamed = "»";
+          deleted = "✘";
+        };
+
+        nix_shell = {
+          symbol = "";
+          style = "red bold";
+          format = "[nix-shell ]($style)";
+        };
+
+        # Command duration - shows when commands take > 2 seconds
+        cmd_duration = {
+          min_time = 2000;
+          style = "yellow";
+          format = " [$duration]($style)";
+        };
+
+        # Show current time
+        time = {
+          disabled = false;
+          style = "base01";
+          format = " [$time]($style)";
+          time_format = "%H:%M";
+        };
+
+        # Show exit code on failure
+        status = {
+          disabled = false;
+          style = "red";
+          format = " [$status]($style)";
+        };
+
+        # Background jobs indicator
+        jobs = {
+          symbol = "⚙";
+          style = "cyan";
+          format = " [$symbol$number]($style)";
+        };
+
+        # Language detection modules
+        rlang = {
+          symbol = "R ";
+          style = "blue";
+          format = " [$symbol$version]($style)";
+        };
+
+        python = {
+          symbol = "py ";
+          style = "yellow";
+          format = " [$symbol$version]($style)";
+        };
+
+        rust = {
+          symbol = "rs ";
+          style = "orange";
+          format = " [$symbol$version]($style)";
+        };
+
+        # Disable modules we don't need
+        aws.disabled = true;
+        gcloud.disabled = true;
+        kubernetes.disabled = true;
+      };
     };
 
     #---------------------------------------------------------------------------
@@ -1038,6 +1301,10 @@
 
           "$mod, V, exec, clipboard-menu"
           "$mod SHIFT, V, exec, clipboard-clear"
+
+          # Fuzzy finders (fzf + rofi)
+          "$mod, O, exec, rofi-files"
+          "$mod, G, exec, rofi-grep"
 
           "$mod SHIFT, Return, layoutmsg, swapwithmaster master"
 
