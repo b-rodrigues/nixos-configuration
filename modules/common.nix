@@ -507,7 +507,7 @@
   #=============================================================================
   
   home-manager.users.brodrigues = { pkgs, ... }: {
-    home.stateVersion = "25.05";
+    # home.stateVersion is set in platform-specific modules
 
     qt = {
       enable = true;
@@ -1374,9 +1374,6 @@
 
   };
 
-  #=============================================================================
-  # SYSTEM VERSION
-  #=============================================================================
-  
-  system.stateVersion = "25.11";
+  # system.stateVersion is set in platform-specific modules
+  # (allows different versions for fresh installs on new hardware)
 }

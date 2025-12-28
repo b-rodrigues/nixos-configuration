@@ -263,5 +263,14 @@
         }
       '';
     };
+
+    # Home Manager state version for this machine
+    home.stateVersion = "25.05";
   };
+
+  #=============================================================================
+  # SYSTEM VERSION - Set once at install, update only for fresh installs
+  #=============================================================================
+  
+  system.stateVersion = "25.11";
 }

@@ -44,3 +44,15 @@ gc
 - **fzf** keybindings: Ctrl+F (file path), Ctrl+G (cd), Ctrl+Y (copy), Ctrl+R (history)
 - **rofi** scripts: Super+O (find files), Super+G (grep in files)
 - Modern development tools: Emacs, Git, direnv, aider-chat
+
+## New Machine Setup
+
+When installing on new hardware:
+
+1. Clone this repo
+2. Copy the appropriate module folder (e.g., `modules/apple-silicon/`) or create a new one
+3. **Update `system.stateVersion`** in the module's `default.nix` to match the NixOS version you're installing
+4. Update `home.stateVersion` similarly
+5. Generate and copy `hardware-configuration.nix`: `nixos-generate-config --show-hardware-config > modules/new-machine/hardware-configuration.nix`
+6. Add the new host to `flake.nix`
+7. Run `sudo nixos-rebuild switch --flake .#new-hostname`
