@@ -21,57 +21,70 @@
     iosevka-custom.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ nixpkgs, nixpkgs-unstable, home-manager, apple-silicon-support, iosevka-custom, ... }:
-  let
-    # Desktop (x86_64)
-    mkDesktopPkgs = system: import nixpkgs-unstable {
-      inherit system;
-      config.allowUnfree = true;
-    };
+  outputs =
+    inputs@{
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      apple-silicon-support,
+      iosevka-custom,
+      ...
+    }:
+    let
+      # Desktop (x86_64)
+      mkDesktopPkgs =
+        system:
+        import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
 
-    # Apple Silicon (aarch64)
-    mkMacPkgs = system: import nixpkgs-unstable {
-      inherit system;
-      config.allowUnfree = true;
-    };
-  in {
-    # Desktop PC (x86_64)
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = {
-        inherit inputs;
-        pkgs-unstable = mkDesktopPkgs "x86_64-linux";
+      # Apple Silicon (aarch64)
+      mkMacPkgs =
+        system:
+        import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
+    in
+    {
+      # Desktop PC (x86_64)
+      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs;
+          pkgs-unstable = mkDesktopPkgs "x86_64-linux";
+        };
+        modules = [
+          ./modules/common.nix
+          ./modules/desktop
+          home-manager.nixosModules.default
+          {
+            fonts.packages = [ iosevka-custom.packages."x86_64-linux".default ];
+          }
+        ];
       };
-      modules = [
-        ./modules/common.nix
-        ./modules/desktop
-        home-manager.nixosModules.default
-        {
-          fonts.packages = [ iosevka-custom.packages."x86_64-linux".default ];
-        }
-      ];
-    };
 
-    # MacBook (Apple Silicon / aarch64)
-    nixosConfigurations.macbook = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      specialArgs = {
-        inherit inputs;
-        pkgs-unstable = mkMacPkgs "aarch64-linux";
+      # MacBook (Apple Silicon / aarch64)
+      nixosConfigurations.macbook = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = {
+          inherit inputs;
+          pkgs-unstable = mkMacPkgs "aarch64-linux";
+        };
+        modules = [
+          # Apple Silicon support module
+          apple-silicon-support.nixosModules.apple-silicon-support
+          # Common and Mac-specific config
+          ./modules/common.nix
+          ./modules/apple-silicon
+          # Home Manager
+          home-manager.nixosModules.default
+          # Custom Iosevka font
+          {
+            fonts.packages = [ iosevka-custom.packages."aarch64-linux".default ];
+          }
+        ];
       };
-      modules = [
-        # Apple Silicon support module
-        apple-silicon-support.nixosModules.apple-silicon-support
-        # Common and Mac-specific config
-        ./modules/common.nix
-        ./modules/apple-silicon
-        # Home Manager
-        home-manager.nixosModules.default
-        # Custom Iosevka font
-        {
-          fonts.packages = [ iosevka-custom.packages."aarch64-linux".default ];
-        }
-      ];
     };
-  };
 }
