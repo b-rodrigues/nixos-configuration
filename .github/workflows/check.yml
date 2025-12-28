@@ -1,0 +1,50 @@
+name: Check
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Validate flake
+        run: nix flake check --no-build
+
+      - name: Check formatting
+        id: format
+        continue-on-error: true
+        run: |
+          # Find all .nix files and check formatting
+          echo "## Formatting Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          NEEDS_FORMAT=false
+          for file in $(find . -name "*.nix" -not -path "./.git/*"); do
+            DIFF=$(nix run nixpkgs#nixfmt -- --check "$file" 2>&1) || {
+              NEEDS_FORMAT=true
+              echo "### ❌ $file needs formatting" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo '```diff' >> $GITHUB_STEP_SUMMARY
+              nix run nixpkgs#nixfmt -- "$file" --diff 2>/dev/null | head -100 >> $GITHUB_STEP_SUMMARY || true
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            }
+          done
+
+          if [ "$NEEDS_FORMAT" = "false" ]; then
+            echo "✅ All files are properly formatted" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "Run \`nix run nixpkgs#nixfmt -- modules/**/*.nix flake.nix\` to fix" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
