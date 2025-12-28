@@ -902,7 +902,7 @@
           echo -e "\033[1;33m╭──────────────────────────────────────────────────────╮\033[0m"
           echo -e "\033[1;33m│\033[0m \033[1;36m Terminal Shortcuts (fzf)\033[0m                          \033[1;33m│\033[0m"
           echo -e "\033[1;33m├──────────────────────────────────────────────────────┤\033[0m"
-          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+T\033[0m     Fuzzy find file, cd to its directory                   \033[1;33m│\033[0m"
+          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+G\\033[0m     Fuzzy find file, insert cd command                   \033[1;33m│\033[0m"
           echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+F\033[0m     Fuzzy find file (insert path)           \033[1;33m│\033[0m"
           echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+Y\033[0m     Fuzzy find file (copy to clipboard)     \033[1;33m│\033[0m"
           echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+R\033[0m     Fuzzy search command history            \033[1;33m│\033[0m"
@@ -963,17 +963,6 @@
         }
         bind -x '"\C-y": __fzf_copy_widget'
 
-        # Ctrl+T: Fuzzy find file and cd to its parent directory
-        __fzf_cd_widget() {
-          local selected
-          selected=$(fd --type f --hidden --follow --exclude .git | fzf --height 40% --reverse)
-          if [ -n "$selected" ]; then
-            local dir
-            dir=$(dirname "$selected")
-            cd "$dir" && echo "cd $dir"
-          fi
-        }
-        bind -x '"\C-t": __fzf_cd_widget'
 
         #=====================================================================
         # BASH COMPLETION
@@ -993,21 +982,19 @@
         export FZF_DEFAULT_OPTS="--height 40% --reverse --color=bg+:#073642,bg:#002b36,spinner:#2aa198,hl:#268bd2,fg:#839496,header:#268bd2,info:#b58900,pointer:#2aa198,marker:#2aa198,fg+:#eee8d5,prompt:#b58900,hl+:#268bd2"
         export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 
-        # Ctrl+T: Fuzzy find file and cd to its parent directory
+        # Ctrl+G: Fuzzy find file and insert cd command to its parent directory
         __fzf_cd_to_file_dir() {
           local selected
           selected=$(fd --type f --hidden --follow --exclude .git | fzf)
           if [ -n "$selected" ]; then
             local dir
             dir=$(dirname "$selected")
-            builtin cd "$dir"
-            # Clear readline and force prompt refresh
-            READLINE_LINE=""
-            READLINE_POINT=0
-            echo "cd $dir"
+            READLINE_LINE="cd \"$dir\""
+            READLINE_POINT=''${#READLINE_LINE}
           fi
         }
-        bind -x '"\\C-t": __fzf_cd_to_file_dir'
+        # Ctrl+G: Fuzzy find file and cd to its parent directory
+        bind -x '"\C-g": __fzf_cd_to_file_dir'
 
         # Ctrl+R: Fuzzy search command history
         __fzf_history_widget() {
@@ -1018,7 +1005,7 @@
             READLINE_POINT=''${#selected}
           fi
         }
-        bind -x '"\\C-r": __fzf_history_widget'
+        bind -x '"\C-r": __fzf_history_widget'
       '';
       
       profileExtra = ''
