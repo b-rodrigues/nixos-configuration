@@ -93,12 +93,6 @@
   # BÉPO keyboard layout for efficient French typing
   #=============================================================================
   
-  services.xserver.xkb = {
-    layout = "fr";
-    variant = "bepo";
-    options = "caps:escape";
-  };
-  
   console.keyMap = "fr";
 
   #=============================================================================
@@ -106,7 +100,14 @@
   #=============================================================================
   
   services = {
-    xserver.enable = true;
+    xserver = {
+      enable = true;
+      xkb = {
+        layout = "fr";
+        variant = "bepo";
+        options = "caps:escape";
+      };
+    };
     
     displayManager = {
       sddm = {
