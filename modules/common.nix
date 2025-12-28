@@ -1,38 +1,17 @@
 #===============================================================================
-# NixOS Configuration for Bruno's Hyprland Desktop - Apple Silicon Edition
+# Common NixOS Configuration - Shared between Desktop and Apple Silicon
 # Author: Bruno Rodrigues and Claude
 # 
-# This configuration provides a complete Wayland desktop environment with:
+# This configuration provides shared settings for both machines:
 # - Hyprland window manager with BÉPO keyboard layout
-# - Apple Silicon hardware support (M2 MacBook Air)
 # - Solarized Dark theme throughout
 # - Development tools (Emacs, Git, direnv)
 # - Modern applications (Brave from nixpkgs.unstable, GIMP, etc.)
-#
-# Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running 'nixos-help').
 #===============================================================================
 
-{ config, pkgs, pkgs-unstable, ... }:
+{ config, pkgs, pkgs-unstable, lib, ... }:
 
 {
-  #=============================================================================
-  # SYSTEM IMPORTS
-  #=============================================================================
-  
-  imports = [
-    ./hardware-configuration.nix    # Hardware-specific settings
-    ./cachix.nix                    # Binary cache (includes nix-community for faster builds)
-  ];
-
-  #=============================================================================
-  # APPLE SILICON SPECIFIC CONFIGURATION
-  #=============================================================================
-
-  # GPU support is now in mainline mesa, no extra config needed
-  # Firmware copied from /boot/asahi into repo for flake compatibility
-  hardware.asahi.peripheralFirmwareDirectory = ./firmware;
-
   #=============================================================================
   # Trusted users
   #=============================================================================
@@ -64,30 +43,16 @@
    nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   #=============================================================================
-  # BOOT & KERNEL CONFIGURATION
+  # BOOT - Common settings (systemd-boot)
   #=============================================================================
   
-  boot = {
-    loader = {
-      systemd-boot.enable = true;
-      # IMPORTANT: Must be false on Apple Silicon
-      efi.canTouchEfiVariables = false;
-    };
-    # Kernel is provided by apple-silicon-support module - don't override it
-    
-    # Enable the screen area around the MacBook notch
-    # This makes the "ears" beside the notch usable for status bars
-    kernelParams = [ "apple_dcp.show_notch=1" ];
-  };
+  boot.loader.systemd-boot.enable = true;
 
   #=============================================================================
-  # GRAPHICS CONFIGURATION
+  # GRAPHICS CONFIGURATION - Base
   #=============================================================================
   
-  hardware.graphics = {
-    enable = true;
-    # Note: 32-bit support not available on aarch64
-  };
+  hardware.graphics.enable = true;
 
   #=============================================================================
   # Hardware
@@ -99,7 +64,7 @@
   zramSwap.enable = true;
 
   #=============================================================================
-  # Docker (rootless works on Apple Silicon)
+  # Docker (rootless)
   #=============================================================================
 
   virtualisation.docker.rootless = {
@@ -107,26 +72,11 @@
     setSocketVariable = true;
   };
 
-  # Note: libvirtd/QEMU works on Apple Silicon but performance may vary
-  # Uncomment if you need it:
-  # virtualisation.libvirtd.enable = true;
-  # programs.virt-manager.enable = true;
-
   #=============================================================================
-  # NETWORK & LOCALIZATION
+  # NETWORK & LOCALIZATION - Common
   #=============================================================================
 
-  networking = {
-    hostName = "macbook";
-    networkmanager = {
-      enable = true;
-      # Use iwd as the WiFi backend (better for Apple Silicon broadcom chips)
-      wifi.backend = "iwd";
-    };
-  };
-
-  # iwd is still needed as the backend for NetworkManager
-  networking.wireless.iwd.enable = true;
+  networking.networkmanager.enable = true;
 
   # European settings for Luxembourg
   time.timeZone = "Europe/Luxembourg";
@@ -174,7 +124,7 @@
   };
 
   #=============================================================================
-  # TYPOGRAPHY & FONTS
+  # TYPOGRAPHY & FONTS - Common
   #=============================================================================
   
   fonts = {
@@ -188,7 +138,6 @@
     fontconfig = {
       enable = true;
       antialias = true;
-      # Note: cache32Bit not available on aarch64
       
       hinting = {
         enable = true;
@@ -214,7 +163,6 @@
   services.pipewire = {
     enable = true;
     alsa.enable = true;
-    # Note: 32-bit support not available on aarch64
     pulse.enable = true;
   };
 
@@ -223,7 +171,6 @@
   #=============================================================================
   
   services.printing.enable = true;
-  # Note: samsung-unified-linux-driver removed (x86 only)
 
   #=============================================================================
   # USER ACCOUNT CONFIGURATION
@@ -233,7 +180,6 @@
     isNormalUser = true;
     description = "Bruno Rodrigues";
     extraGroups = [ 
-      # "libvirtd"         # Uncomment if using libvirtd
       "networkmanager"
       "wheel"
     ];
@@ -297,10 +243,10 @@
       tree
       ispell
       fastfetch
-      brightnessctl               # For laptop brightness control
-      networkmanagerapplet        # Network management GUI
-      fd                          # Fast find alternative (used by fzf)
-      ripgrep                     # Fast grep alternative
+      brightnessctl
+      networkmanagerapplet
+      fd
+      ripgrep
 
       # Screen recording and video tools
       obs-studio
@@ -569,7 +515,7 @@
       style.name = "breeze";
     };
 
-    # Install Breeze themes and icons for Qt apps (Qt6 only, Plasma 6 handles Qt5 fallback)
+    # Install Breeze themes and icons for Qt apps
     home.packages = with pkgs; [
       kdePackages.breeze
       kdePackages.breeze-icons
@@ -861,11 +807,11 @@
         fgrep = "fgrep --color=auto";
         egrep = "egrep --color=auto";
         
-        # NixOS system management - updated for Apple Silicon
-        rebuild = "sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
-        upgrade = "cd /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon && nix flake update && sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
-        rebuild-test = "sudo nixos-rebuild test --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
-        rebuild-dry = "sudo nixos-rebuild dry-build --flake /home/brodrigues/Documents/repos/nixos-configuration/apple-silicon#macbook";
+        # NixOS system management - Platform-agnostic using hostname
+        rebuild = "sudo nixos-rebuild switch --flake /home/brodrigues/Documents/repos/nixos-configuration#$(hostname)";
+        upgrade = "cd /home/brodrigues/Documents/repos/nixos-configuration && nix flake update && sudo nixos-rebuild switch --flake .#$(hostname)";
+        rebuild-test = "sudo nixos-rebuild test --flake /home/brodrigues/Documents/repos/nixos-configuration#$(hostname)";
+        rebuild-dry = "sudo nixos-rebuild dry-build --flake /home/brodrigues/Documents/repos/nixos-configuration#$(hostname)";
         rollback = "sudo nixos-rebuild switch --rollback";
         gc = "sudo nix-collect-garbage -d && nix-collect-garbage -d";
       };
@@ -902,7 +848,7 @@
           echo -e "\033[1;33m╭──────────────────────────────────────────────────────╮\033[0m"
           echo -e "\033[1;33m│\033[0m \033[1;36m Terminal Shortcuts (fzf)\033[0m                          \033[1;33m│\033[0m"
           echo -e "\033[1;33m├──────────────────────────────────────────────────────┤\033[0m"
-          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+G\\033[0m     Fuzzy find file, insert cd command                   \033[1;33m│\033[0m"
+          echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+G\033[0m     Fuzzy find file, insert cd command      \033[1;33m│\033[0m"
           echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+F\033[0m     Fuzzy find file (insert path)           \033[1;33m│\033[0m"
           echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+Y\033[0m     Fuzzy find file (copy to clipboard)     \033[1;33m│\033[0m"
           echo -e "\033[1;33m│\033[0m  \033[1;32mCtrl+R\033[0m     Fuzzy search command history            \033[1;33m│\033[0m"
@@ -950,7 +896,7 @@
             READLINE_POINT=$((READLINE_POINT + ''${#selected}))
           fi
         }
-        bind -x '"\C-f": __fzf_file_widget'
+        bind -x '"\\C-f": __fzf_file_widget'
 
         # Ctrl+Y: Fuzzy find file and copy path to clipboard
         __fzf_copy_widget() {
@@ -961,7 +907,7 @@
             echo "Copied: $selected"
           fi
         }
-        bind -x '"\C-y": __fzf_copy_widget'
+        bind -x '"\\C-y": __fzf_copy_widget'
 
 
         #=====================================================================
@@ -993,8 +939,7 @@
             READLINE_POINT=''${#READLINE_LINE}
           fi
         }
-        # Ctrl+G: Fuzzy find file and cd to its parent directory
-        bind -x '"\C-g": __fzf_cd_to_file_dir'
+        bind -x '"\\C-g": __fzf_cd_to_file_dir'
 
         # Ctrl+R: Fuzzy search command history
         __fzf_history_widget() {
@@ -1005,7 +950,7 @@
             READLINE_POINT=''${#selected}
           fi
         }
-        bind -x '"\C-r": __fzf_history_widget'
+        bind -x '"\\C-r": __fzf_history_widget'
       '';
       
       profileExtra = ''
@@ -1085,9 +1030,6 @@
           green = "#859900";
         };
 
-        # Two-line prompt format:
-        # Line 1: Language versions, jobs, duration, status, time (info line)
-        # Line 2: nix-shell, path, git info, $ (main prompt)
         format = "$rlang$python$rust$jobs$cmd_duration$status$time$line_break$nix_shell$directory$git_branch$git_status$character";
 
         character = {
@@ -1110,9 +1052,9 @@
 
         directory = {
           style = "blue bold";
-          truncation_length = 100;  # Effectively show full path
-          truncate_to_repo = false;  # Don't truncate, show full path
-          fish_style_pwd_dir_length = 1;  # When truncating, use fish style (1 char per dir)
+          truncation_length = 100;
+          truncate_to_repo = false;
+          fish_style_pwd_dir_length = 1;
           truncation_symbol = "";
         };
 
@@ -1143,14 +1085,12 @@
           format = "[nix-shell ]($style)";
         };
 
-        # Command duration - shows when commands take > 2 seconds
         cmd_duration = {
           min_time = 2000;
           style = "yellow";
           format = " [$duration]($style)";
         };
 
-        # Show current time
         time = {
           disabled = false;
           style = "base01";
@@ -1158,21 +1098,18 @@
           time_format = "%H:%M";
         };
 
-        # Show exit code on failure
         status = {
           disabled = false;
           style = "red";
           format = " [$status]($style)";
         };
 
-        # Background jobs indicator
         jobs = {
           symbol = "⚙";
           style = "cyan";
           format = " [$symbol$number]($style)";
         };
 
-        # Language detection modules
         rlang = {
           symbol = "R ";
           style = "blue";
@@ -1191,7 +1128,6 @@
           format = " [$symbol$version]($style)";
         };
 
-        # Disable modules we don't need
         aws.disabled = true;
         gcloud.disabled = true;
         kubernetes.disabled = true;
@@ -1214,7 +1150,7 @@
     };
 
     #---------------------------------------------------------------------------
-    # HYPRLAND WINDOW MANAGER
+    # HYPRLAND WINDOW MANAGER - Base config (waybar and touchpad in platform modules)
     #---------------------------------------------------------------------------
     
     wayland.windowManager.hyprland = {
@@ -1226,7 +1162,7 @@
 
         exec-once = [
           "waybar"
-          "nm-applet --indicator"   # Network manager applet (--indicator needed for tray)
+          "nm-applet --indicator"
           "wl-paste --watch cliphist store"
           "lxqt-policykit-agent"
         ];
@@ -1289,13 +1225,11 @@
           "$mod, V, exec, clipboard-menu"
           "$mod SHIFT, V, exec, clipboard-clear"
 
-          # Fuzzy finders (fzf + rofi)
           "$mod, O, exec, rofi-files"
           "$mod, G, exec, rofi-grep"
 
           "$mod SHIFT, Return, layoutmsg, swapwithmaster master"
 
-          # Window focus movement (BÉPO: C-T-S-R instead of H-J-K-L)
           "$mod, C, movefocus, l"
           "$mod, S, movefocus, u"
           "$mod, T, movefocus, d"
@@ -1306,7 +1240,6 @@
           "$mod SHIFT, T, movewindow, d"
           "$mod SHIFT, R, movewindow, r"
 
-          # Workspace switching (BÉPO number row)
           "$mod, quotedbl, workspace, 1"
           "$mod, guillemotleft, workspace, 2"
           "$mod, guillemotright, workspace, 3"
@@ -1339,7 +1272,6 @@
           ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
           ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
           ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-          # Brightness keys for MacBook
           ", XF86MonBrightnessUp, exec, brightnessctl set +5%"
           ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
         ];
@@ -1360,212 +1292,6 @@
           "suppressevent activatefocus, class:^(gimp-3.0)$"
         ];
       };
-    };
-
-    #---------------------------------------------------------------------------
-    # WAYBAR STATUS BAR
-    #---------------------------------------------------------------------------
-    
-    programs.waybar = {
-      enable = true;
-      settings = {
-        mainBar = {
-          layer = "top";
-          position = "top";
-          # Height matches the MacBook M2 notch area (~56px at native resolution)
-          # Adjusted for your 1.5x scaling factor
-          height = 28;
-          spacing = 2;
-          
-          # Layout optimized for notch: content on sides, center is empty (notch area)
-          modules-left = [ "hyprland/workspaces" ];
-          modules-center = [];  # Empty - this is where the notch sits
-          modules-right = [ "cpu" "memory" "battery" "wireplumber" "clock" "tray" "custom/power" ];
-
-          "hyprland/workspaces" = {
-            disable-scroll = true;
-            all-outputs = true;
-            format = "{name}";
-          };
-
-          cpu = {
-            format = "cpu: {usage}%";
-            tooltip-format = "CPU: {usage}%";
-            interval = 1;
-            states = {
-              warning = 70;
-              critical = 90;
-            };
-          };
-
-          memory = {
-            format = "mem: {used:0.1f}G";
-            interval = 1;
-            tooltip = true;
-            tooltip-format = "Memory: {used:0.1f}G / {total:0.1f}G ({percentage}%)";
-            on-click = "ghostty htop";
-          };
-
-          battery = {
-            format = "bat: {icon} {capacity}%";
-            format-icons = ["" "" "" "" ""];
-            format-charging = "bat: ⚡ {capacity}%";
-            states = {
-              warning = 30;
-              critical = 15;
-            };
-          };
-
-          wireplumber = {
-            format = "vol: {volume}%";
-            format-muted = "vol: muted";
-            scroll-step = 5;
-            on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-            on-click-right = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 100%";
-            tooltip = true;
-            tooltip-format = "{node_name}";
-          };
-
-          "custom/power" = {
-            format = "⏻";
-            tooltip = false;
-            on-click = "rofi -show power-menu -modi power-menu:${pkgs.writeShellScript "rofi-power-menu" ''
-              #!/bin/sh
-              
-              case $1 in
-                "")
-                  echo "logout"
-                  echo "reboot"
-                  echo "shutdown"
-                  ;;
-                "logout")
-                  hyprctl dispatch exit
-                  ;;
-                "reboot")
-                  systemctl reboot
-                  ;;
-                "shutdown")
-                  systemctl poweroff
-                  ;;
-              esac
-            ''}";
-          };
-
-          clock = {
-            timezone = "Europe/Luxembourg";
-            format = "{:%m-%d %H:%M}";
-            interval = 60;
-            on-click = "show-calendar";
-            tooltip-format = "<span>{calendar}</span>";
-            calendar = {
-              mode = "month";
-              format = {
-                months = "<span color='#d33682'><b>{}</b></span>";
-                days = "<span color='#839496'><b>{}</b></span>";
-                weekdays = "<span color='#859900'><b>{}</b></span>";
-                today = "<span color='#b58900'><b>{}</b></span>";
-              };
-            };
-          };
-        };
-      };
-
-      style = ''
-        * {
-          font-family: "Iosevka Custom", monospace;
-          font-size: 11px;
-          border: none;
-          border-radius: 0;
-          min-height: 0;
-        }
-
-        window#waybar {
-          background-color: #002b36;
-          border-bottom: 2px solid #073642;
-          color: #839496;
-          transition-property: background-color;
-          transition-duration: .5s;
-        }
-
-        #workspaces button {
-          padding: 0 5px;
-          background-color: transparent;
-          color: #586e75;
-          border: none;
-          border-radius: 0;
-        }
-
-        #workspaces button:hover {
-          background-color: #073642;
-          color: #839496;
-        }
-
-        #workspaces button.active {
-          background-color: #d33682;
-          color: #fdf6e3;
-          border-bottom: 2px solid #dc322f;
-        }
-
-        #cpu, #memory, #clock, #wireplumber, #tray, #battery {
-          padding: 0 6px;
-          color: #839496;
-          margin: 0 1px;
-          font-size: 13px;
-        }
-
-        #cpu {
-          color: #268bd2;
-        }
-
-        #memory {
-          color: #859900;
-        }
-
-        #battery {
-          color: #2aa198;
-        }
-
-        #battery.warning {
-          color: #b58900;
-        }
-
-        #battery.critical {
-          color: #dc322f;
-        }
-
-        #wireplumber {
-          color: #cb4b16;
-        }
-
-        #wireplumber.muted {
-          color: #dc322f;
-        }
-
-        #clock {
-          color: #b58900;
-          font-weight: bold;
-          padding: 0 4px;
-          min-width: 0;
-        }
-
-        #custom-power {
-          color: #dc322f;
-          font-size: 13px;
-          padding: 0 8px;
-        }
-
-        #tray {
-          color: #6c71c4;
-          margin-left: 15px;
-        }
-
-        tooltip {
-          background-color: #073642;
-          color: #839496;
-          border: 1px solid #586e75;
-          border-radius: 3px;
-        }
-      '';
     };
 
     #---------------------------------------------------------------------------
