@@ -566,11 +566,11 @@
           [Colors:Button]
           BackgroundAlternate=0,43,54
           BackgroundNormal=7,54,66
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -580,11 +580,11 @@
           [Colors:Complementary]
           BackgroundAlternate=0,43,54
           BackgroundNormal=7,54,66
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -594,11 +594,11 @@
           [Colors:Header]
           BackgroundAlternate=7,54,66
           BackgroundNormal=7,54,66
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -608,11 +608,11 @@
           [Colors:Header][Inactive]
           BackgroundAlternate=7,54,66
           BackgroundNormal=7,54,66
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -621,26 +621,26 @@
 
           [Colors:Selection]
           BackgroundAlternate=0,43,54
-          BackgroundNormal=38,139,210
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=131,148,150
+          BackgroundNormal=211,54,130
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=0,0,0
           ForegroundInactive=88,110,117
-          ForegroundLink=147,161,161
+          ForegroundLink=0,0,0
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
+          ForegroundNormal=0,0,0
           ForegroundPositive=133,153,0
           ForegroundVisited=108,113,196
 
           [Colors:Tooltip]
           BackgroundAlternate=7,54,66
           BackgroundNormal=7,54,66
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -650,11 +650,11 @@
           [Colors:View]
           BackgroundAlternate=7,54,66
           BackgroundNormal=0,43,54
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -664,11 +664,11 @@
           [Colors:Window]
           BackgroundAlternate=7,54,66
           BackgroundNormal=7,54,66
-          DecorationFocus=38,139,210
-          DecorationHover=38,139,210
-          ForegroundActive=38,139,210
+          DecorationFocus=211,54,130
+          DecorationHover=211,54,130
+          ForegroundActive=211,54,130
           ForegroundInactive=88,110,117
-          ForegroundLink=38,139,210
+          ForegroundLink=211,54,130
           ForegroundNegative=220,50,47
           ForegroundNeutral=203,75,22
           ForegroundNormal=131,148,150
@@ -680,8 +680,23 @@
           Name=Breeze Solarized Dark
           shadeSortColumn=true
 
+          [Icons]
+          Theme=Papirus-Dark
+          Panel=22
+          Desktop=32
+          Dialog=22
+          MainToolbar=16
+          Small=16
+          Toolbar=16
+
           [KDE]
           contrast=4
+          ShowDeleteCommand=false
+          SingleClick=false
+
+          [Toolbar style]
+          ToolButtonStyle=IconOnly
+          ToolButtonStyleOtherToolbars=IconOnly
 
           [WM]
           activeBackground=7,54,66
@@ -1185,6 +1200,7 @@
           monitor = ",preferred,auto,auto";
 
           exec-once = [
+            "swww-daemon & sleep 1 && swww clear 073642"
             "waybar"
             "nm-applet --indicator"
             "wl-paste --watch cliphist store"
@@ -1205,8 +1221,8 @@
           };
 
           general = {
-            gaps_in = 2;
-            gaps_out = 5;
+            gaps_in = 0;
+            gaps_out = 0;
             border_size = 1;
             "col.active_border" = "rgb(d33682)";
             "col.inactive_border" = "rgb(586e75)";
@@ -1218,18 +1234,18 @@
             enabled = true;
             bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
             animation = [
-              "windows, 1, 7, myBezier"
-              "windowsOut, 1, 7, default, popin 80%"
-              "border, 1, 10, default"
-              "borderangle, 1, 8, default"
-              "fade, 1, 7, default"
-              "workspaces, 1, 6, default"
+              "windows, 1, 3, myBezier"
+              "windowsOut, 1, 3, default, popin 80%"
+              "border, 1, 4, default"
+              "borderangle, 1, 3, default"
+              "fade, 1, 3, default"
+              "workspaces, 1, 2, default"
             ];
           };
 
           misc = {
             force_default_wallpaper = 0;
-            disable_hyprland_logo = false;
+            disable_hyprland_logo = true;
             vfr = true;
           };
 
