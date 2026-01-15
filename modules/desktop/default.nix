@@ -35,8 +35,7 @@
 
   boot = {
     loader.efi.canTouchEfiVariables = true;
-    # Use latest kernel for best hardware support
-    kernelPackages = pkgs.linuxPackages_6_17;
+    kernelPackages = pkgs.linuxPackages_6_18;
   };
 
   #=============================================================================
