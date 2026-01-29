@@ -78,10 +78,18 @@
   #=============================================================================
   # Docker (rootless)
   #=============================================================================
-
-  virtualisation.docker.rootless = {
+  virtualisation.docker = {
     enable = true;
-    setSocketVariable = true;
+  
+    rootless = {
+      enable = true;
+      setSocketVariable = true;
+      daemon.settings = { };  # This forces creation of the user service
+    };
+  };
+
+  systemd.user.services.docker = {
+    wantedBy = [ "default.target" ];
   };
 
   #=============================================================================
