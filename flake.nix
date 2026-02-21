@@ -12,8 +12,13 @@
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Nixpkgs Master (for cutting edge packages like antigravity)
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+
     # Apple Silicon support (kernel, firmware, etc.) - only used by macbook
-    apple-silicon-support.url = "github:nix-community/nixos-apple-silicon";
+    # Pinned to kernel 6.17.12 due to notch regression in 6.18.x
+    # See: https://github.com/nix-community/nixos-apple-silicon/commit/aa6cb2eec178e43cefa244f18647be60d3d49378
+    apple-silicon-support.url = "github:nix-community/nixos-apple-silicon/aa6cb2eec178e43cefa244f18647be60d3d49378";
     apple-silicon-support.inputs.nixpkgs.follows = "nixpkgs";
 
     # Custom Iosevka font
@@ -25,6 +30,7 @@
     inputs@{
       nixpkgs,
       nixpkgs-unstable,
+      nixpkgs-master,
       home-manager,
       apple-silicon-support,
       iosevka-custom,
@@ -46,6 +52,13 @@
           inherit system;
           config.allowUnfree = true;
         };
+
+      mkMasterPkgs =
+        system:
+        import nixpkgs-master {
+          inherit system;
+          config.allowUnfree = true;
+        };
     in
     {
       # Desktop PC (x86_64)
@@ -54,6 +67,7 @@
         specialArgs = {
           inherit inputs;
           pkgs-unstable = mkDesktopPkgs "x86_64-linux";
+          pkgs-master = mkMasterPkgs "x86_64-linux";
         };
         modules = [
           ./modules/common.nix
@@ -71,6 +85,7 @@
         specialArgs = {
           inherit inputs;
           pkgs-unstable = mkMacPkgs "aarch64-linux";
+          pkgs-master = mkMasterPkgs "aarch64-linux";
         };
         modules = [
           # Apple Silicon support module

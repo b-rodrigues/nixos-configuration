@@ -13,6 +13,7 @@
   config,
   pkgs,
   pkgs-unstable,
+  pkgs-master,
   lib,
   ...
 }:
@@ -249,7 +250,7 @@
 
       # Development & AI Tools
       aider-chat
-      antigravity
+      pkgs-master.antigravity
       jq
 
       # Web & Communication
