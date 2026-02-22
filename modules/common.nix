@@ -258,6 +258,7 @@
 
       # System Utilities
       cachix
+      docker-compose
       pavucontrol
       libnotify
       htop
