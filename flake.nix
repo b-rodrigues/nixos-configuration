@@ -16,9 +16,7 @@
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
     # Apple Silicon support (kernel, firmware, etc.) - only used by macbook
-    # Pinned to kernel 6.17.12 due to notch regression in 6.18.x
-    # See: https://github.com/nix-community/nixos-apple-silicon/commit/aa6cb2eec178e43cefa244f18647be60d3d49378
-    apple-silicon-support.url = "github:nix-community/nixos-apple-silicon/aa6cb2eec178e43cefa244f18647be60d3d49378";
+    apple-silicon-support.url = "github:nix-community/nixos-apple-silicon/";
     apple-silicon-support.inputs.nixpkgs.follows = "nixpkgs";
 
     # Custom Iosevka font

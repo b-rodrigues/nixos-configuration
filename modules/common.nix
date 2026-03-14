@@ -251,6 +251,8 @@
       # Development & AI Tools
       aider-chat
       pkgs-master.antigravity
+      pkgs-master.gemini-cli
+      codex
       jq
 
       # Web & Communication

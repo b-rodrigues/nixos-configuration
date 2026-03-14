@@ -42,7 +42,7 @@
     # Kernel is provided by apple-silicon-support module
 
     # Enable the screen area around the MacBook notch
-    kernelParams = [ "apple_dcp.show_notch=1" ];
+    kernelParams = [ "appledrm.show_notch=1" ];
   };
 
   #=============================================================================
