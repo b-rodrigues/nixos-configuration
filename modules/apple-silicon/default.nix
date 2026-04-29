@@ -45,6 +45,8 @@
     kernelParams = [ "appledrm.show_notch=1" ];
   };
 
+  boot.kernel.sysctl."vm.mmap_rnd_bits" = lib.mkForce 18;
+
   #=============================================================================
   # NETWORKING - Apple Silicon specific
   #=============================================================================
