@@ -295,7 +295,7 @@
       imv
       slurp
       sway-contrib.grimshot
-      swww
+      awww
       waybar
       hypridle
       wl-clipboard
@@ -1206,13 +1206,14 @@
 
       wayland.windowManager.hyprland = {
         enable = true;
+        configType = "hyprlang";
         settings = {
           "$mod" = "SUPER";
 
           monitor = ",preferred,auto,auto";
 
           exec-once = [
-            "swww-daemon & sleep 1 && swww clear 073642"
+            "awww-daemon & sleep 1 && awww clear 073642"
             "waybar"
             "nm-applet --indicator"
             "wl-paste --watch cliphist store"
@@ -1258,7 +1259,7 @@
           misc = {
             force_default_wallpaper = 0;
             disable_hyprland_logo = true;
-            vfr = true;
+            vrr = 0;
           };
 
           bind = [
@@ -1272,7 +1273,6 @@
             "$mod, L, exec, rofi -show window"
             "$mod, P, exec, grimshot-menu"
             "$mod SHIFT, P, pseudo"
-            "$mod, J, togglesplit"
 
             "$mod, V, exec, clipboard-menu"
             "$mod SHIFT, V, exec, clipboard-clear"
@@ -1328,20 +1328,20 @@
             ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
           ];
 
-          windowrulev2 = [
-            "suppressevent maximize, class:.*"
+          windowrule = [
+            "match:class .*, suppress_event maximize"
 
-            "workspace 1, class:^(brave-browser)$"
-            "noinitialfocus, class:^(brave-browser)$"
-            "suppressevent activatefocus, class:^(brave-browser)$"
+            "match:class ^(brave-browser)$, workspace 1"
+            "match:class ^(brave-browser)$, no_initial_focus on"
+            "match:class ^(brave-browser)$, suppress_event activatefocus"
 
-            "workspace 3, class:^(emacs)$"
-            "noinitialfocus, class:^(emacs)$"
-            "suppressevent activatefocus, class:^(emacs)$"
+            "match:class ^(emacs)$, workspace 3"
+            "match:class ^(emacs)$, no_initial_focus on"
+            "match:class ^(emacs)$, suppress_event activatefocus"
 
-            "workspace 5, class:^(gimp-3.0)$"
-            "noinitialfocus, class:^(gimp-3.0)$"
-            "suppressevent activatefocus, class:^(gimp-3.0)$"
+            "match:class ^(gimp-3.0)$, workspace 5"
+            "match:class ^(gimp-3.0)$, no_initial_focus on"
+            "match:class ^(gimp-3.0)$, suppress_event activatefocus"
           ];
         };
       };
