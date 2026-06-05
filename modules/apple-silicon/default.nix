@@ -39,6 +39,7 @@
 
   boot = {
     loader.efi.canTouchEfiVariables = false; # Required for Apple Silicon
+    loader.systemd-boot.graceful = true;     # Treat EFI var write failures as warnings, not errors
     # Kernel is provided by apple-silicon-support module
 
     # Enable the screen area around the MacBook notch

@@ -251,8 +251,8 @@
       # Development & AI Tools
       aider-chat
       pkgs-master.antigravity
-      pkgs-master.gemini-cli
-      codex
+      pkgs-master.antigravity-cli
+      opencode
       jq
 
       # Web & Communication
@@ -1259,6 +1259,7 @@
           misc = {
             force_default_wallpaper = 0;
             disable_hyprland_logo = true;
+            no_update_news = true;
             vrr = 0;
           };
 
@@ -1329,19 +1330,19 @@
           ];
 
           windowrule = [
-            "match:class .*, suppress_event maximize"
+            "suppress_event maximize, match:class .*"
 
-            "match:class ^(brave-browser)$, workspace 1"
-            "match:class ^(brave-browser)$, no_initial_focus on"
-            "match:class ^(brave-browser)$, suppress_event activatefocus"
+            "workspace 1 silent, match:class ^(brave-browser)$"
+            "no_initial_focus 1, match:class ^(brave-browser)$"
+            "suppress_event activatefocus, match:class ^(brave-browser)$"
 
-            "match:class ^(emacs)$, workspace 3"
-            "match:class ^(emacs)$, no_initial_focus on"
-            "match:class ^(emacs)$, suppress_event activatefocus"
+            "workspace 3 silent, match:class ^(emacs)$"
+            "no_initial_focus 1, match:class ^(emacs)$"
+            "suppress_event activatefocus, match:class ^(emacs)$"
 
-            "match:class ^(gimp-3.0)$, workspace 5"
-            "match:class ^(gimp-3.0)$, no_initial_focus on"
-            "match:class ^(gimp-3.0)$, suppress_event activatefocus"
+            "workspace 5 silent, match:class ^(gimp-3.0)$"
+            "no_initial_focus 1, match:class ^(gimp-3.0)$"
+            "suppress_event activatefocus, match:class ^(gimp-3.0)$"
           ];
         };
       };
