@@ -143,6 +143,8 @@
     };
 
     desktopManager.plasma6.enable = true;
+
+    tailscale.enable = true;
   };
 
   #=============================================================================
@@ -1034,6 +1036,12 @@
         enableBashIntegration = true;
       };
 
+      programs.tmux = {
+        enable = true;
+        clock24 = true;
+      };
+     
+
       programs.fzf = {
         enable = true;
         # Disable fzf's bash integration - we set up our own keybindings in initExtra
@@ -1259,7 +1267,6 @@
           misc = {
             force_default_wallpaper = 0;
             disable_hyprland_logo = true;
-            no_update_news = true;
             vrr = 0;
           };
 
