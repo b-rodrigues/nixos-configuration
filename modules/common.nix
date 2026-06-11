@@ -536,6 +536,12 @@
   # HOME MANAGER CONFIGURATION
   #=============================================================================
 
+  # Required for Home Manager's NixOS module to create the per-user activation
+  # service (home-manager-brodrigues.service). Without these two flags the
+  # module silently skips activation even when home-manager.users is configured.
+  home-manager.useGlobalPkgs = true;
+  home-manager.useUserPackages = true;
+
   home-manager.users.brodrigues =
     { pkgs, ... }:
     {
