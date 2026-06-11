@@ -541,6 +541,8 @@
   # module silently skips activation even when home-manager.users is configured.
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
+  # Back up any pre-existing files HM wants to manage (instead of hard-failing).
+  home-manager.backupFileExtension = "bak";
 
   home-manager.users.brodrigues =
     { pkgs, ... }:
