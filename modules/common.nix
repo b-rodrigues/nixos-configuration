@@ -1089,7 +1089,7 @@
             green = "#859900";
           };
 
-          format = "$rlang$python$rust$jobs$cmd_duration$status$time$line_break$nix_shell$directory$git_branch$git_status$character";
+          format = "$username$hostname$rlang$python$rust$jobs$cmd_duration$status$time$line_break$nix_shell$directory$git_branch$git_status$character";
 
           character = {
             success_symbol = "[\\$](green)";
