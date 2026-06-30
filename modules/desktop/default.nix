@@ -38,6 +38,9 @@
     kernelPackages = pkgs.linuxPackages_6_18;
   };
 
+  # Enable CUDA globally for GPU-accelerated packages (llama-cpp, etc.)
+  nixpkgs.config.cudaSupport = true;
+
   #=============================================================================
   # NETWORKING - Desktop specific
   #=============================================================================
@@ -82,7 +85,7 @@
   services.printing.drivers = [ pkgs.samsung-unified-linux-driver ];
 
   #=============================================================================
-  # GAMING - Steam, SteamCMD, Moonlight/Sunshine, and helpers
+  # GAMING - Steam, SteamCMD, Sunshine, and helpers
   #=============================================================================
 
   programs.steam = {
@@ -129,10 +132,41 @@
     codex # OpenAI Codex
     gamescope # Nested Wayland compositor useful for troublesome games
     mangohud # In-game FPS/GPU overlay
-    moonlight-qt # Moonlight client for streaming games from other hosts
     protonup-qt # GUI for managing additional Proton-GE versions
     steamcmd # Valve command-line tool for dedicated servers/tools
+
+    # AI / Local LLM
+    llama-cpp # CUDA-enabled via nixpkgs.config.cudaSupport
   ];
+
+  #=============================================================================
+  # AI - llama.cpp local model server (Qwen3.6-35B-A3B)
+  #=============================================================================
+
+  systemd.services.llama-server = {
+    description = "llama.cpp OpenAI-compatible API server";
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = ''
+        ${pkgs.llama-cpp}/bin/llama-server \
+          -m /var/lib/llama-cpp/Qwen3.6-35B-A3B-UD-IQ3_S.gguf \
+          --jinja \
+          --host 127.0.0.1 \
+          --port 8080 \
+          -ngl 99 \
+          -c 32768 \
+          --temp 0.6 \
+          --top-k 20 \
+          --top-p 0.95
+      '';
+      User = "brodrigues";
+      Restart = "on-failure";
+      RestartSec = "5";
+      StateDirectory = "llama-cpp";
+      StateDirectoryMode = "0755";
+    };
+  };
 
   #=============================================================================
   # WAYBAR - Standard single bar layout (no notch)
@@ -320,6 +354,28 @@
           }
         '';
       };
+
+      #---------------------------------------------------------------------------
+      # OpenCode - Qwen3.6-35B-A3B via local llama.cpp
+      #---------------------------------------------------------------------------
+      home.file.".config/opencode/opencode.jsonc".text = ''
+        {
+          "$schema": "https://opencode.ai/config.json",
+          "provider": {
+            "llama-cpp": {
+              "name": "llama.cpp (local Qwen3.6-35B)",
+              "apiKey": "unused",
+              "baseURL": "http://127.0.0.1:8080/v1",
+              "models": {
+                "Qwen3.6-35B-A3B-UD-IQ3_S": {
+                  "name": "Qwen3.6-35B-A3B (IQ3_S)"
+                }
+              }
+            }
+          },
+          "model": "llama-cpp/Qwen3.6-35B-A3B-UD-IQ3_S"
+        }
+      '';
 
       # Home Manager state version for this machine
       home.stateVersion = "25.05";
