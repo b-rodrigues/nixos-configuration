@@ -45,7 +45,7 @@
   networking.hostName = "nixos";
 
   #=============================================================================
-  # GRAPHICS - 32-bit support for x86_64
+  # GRAPHICS - NVIDIA/Steam 32-bit support for x86_64
   #=============================================================================
 
   hardware.graphics.enable32Bit = true;
@@ -69,8 +69,11 @@
   virtualisation.libvirtd.enable = true;
   programs.virt-manager.enable = true;
 
-  # Add libvirtd group to user
-  users.users.brodrigues.extraGroups = lib.mkAfter [ "libvirtd" ];
+  # Add desktop hardware/service groups to user
+  users.users.brodrigues.extraGroups = lib.mkAfter [
+    "libvirtd"
+    "uinput"
+  ];
 
   #=============================================================================
   # PRINTING - Samsung driver (x86 only)
@@ -79,12 +82,56 @@
   services.printing.drivers = [ pkgs.samsung-unified-linux-driver ];
 
   #=============================================================================
+  # GAMING - Steam, SteamCMD, Moonlight/Sunshine, and helpers
+  #=============================================================================
+
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
+
+    # Include a community Proton build so games that need newer compatibility
+    # fixes have an out-of-the-box option in Steam's compatibility settings.
+    extraCompatPackages = with pkgs; [
+      proton-ge-bin
+    ];
+  };
+
+  programs.gamemode.enable = true;
+
+  # Sunshine exposes this desktop as a Moonlight-compatible game-streaming host.
+  services.sunshine = {
+    enable = true;
+    autoStart = true;
+    capSysAdmin = true;
+    openFirewall = true;
+  };
+
+  # Let Sunshine create virtual input devices for Moonlight controllers, keyboard,
+  # and mouse. Avahi user service publishing helps Moonlight discover the host on
+  # the LAN instead of requiring manual IP entry.
+  hardware.uinput.enable = true;
+  services.avahi = {
+    enable = true;
+    publish = {
+      enable = true;
+      userServices = true;
+    };
+  };
+
+  #=============================================================================
   # Desktop-specific packages
   #=============================================================================
 
   environment.systemPackages = with pkgs; [
     air-formatter # Format R code (may not be available on aarch64)
     codex # OpenAI Codex
+    gamescope # Nested Wayland compositor useful for troublesome games
+    mangohud # In-game FPS/GPU overlay
+    moonlight-qt # Moonlight client for streaming games from other hosts
+    protonup-qt # GUI for managing additional Proton-GE versions
+    steamcmd # Valve command-line tool for dedicated servers/tools
   ];
 
   #=============================================================================
