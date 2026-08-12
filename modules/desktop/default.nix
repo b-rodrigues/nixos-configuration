@@ -24,6 +24,7 @@
   imports = [
     ./hardware-configuration.nix
     ./cachix.nix
+    ./network-watchdog.nix
   ]
   ++ (builtins.filter (f: builtins.pathExists f) [
     ./nvidia.nix # NVIDIA configuration (optional)
