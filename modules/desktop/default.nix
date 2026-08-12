@@ -72,9 +72,55 @@
   virtualisation.libvirtd.enable = true;
   programs.virt-manager.enable = true;
 
+  # Incus - system container and VM manager (uses KVM)
+  networking.nftables.enable = true;
+  virtualisation.incus.enable = true;
+
+  virtualisation.incus.preseed = {
+    networks = [
+      {
+        name = "incusbr0";
+        type = "bridge";
+        config = {
+          "ipv4.address" = "10.0.100.1/24";
+          "ipv4.nat" = "true";
+        };
+      }
+    ];
+    storage_pools = [
+      {
+        name = "default";
+        driver = "dir";
+        config = {
+          source = "/var/lib/incus/storage-pools/default";
+        };
+      }
+    ];
+    profiles = [
+      {
+        name = "default";
+        devices = {
+          root = {
+            path = "/";
+            pool = "default";
+            type = "disk";
+            size = "25GiB";
+          };
+        };
+      }
+    ];
+  };
+
+  # Allow DHCP and DNS on the Incus bridge
+  networking.firewall.interfaces.incusbr0 = {
+    allowedTCPPorts = [ 53 67 ];
+    allowedUDPPorts = [ 53 67 ];
+  };
+
   # Add desktop hardware/service groups to user
   users.users.brodrigues.extraGroups = lib.mkAfter [
     "libvirtd"
+    "incus-admin"
     "uinput"
   ];
 
@@ -146,7 +192,6 @@
   systemd.services.llama-server = {
     description = "llama.cpp OpenAI-compatible API server";
     after = [ "network.target" ];
-    wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       ExecStart = ''
         ${pkgs.llama-cpp}/bin/llama-server \
@@ -358,24 +403,29 @@
       #---------------------------------------------------------------------------
       # OpenCode - Qwen3.6-35B-A3B via local llama.cpp
       #---------------------------------------------------------------------------
-      home.file.".config/opencode/opencode.jsonc".text = ''
+      home.file.".config/opencode/opencode.jsonc" = {
+        force = true;
+        text = ''
         {
           "$schema": "https://opencode.ai/config.json",
           "provider": {
-            "llama-cpp": {
+            "llama.cpp": {
+              "npm": "@ai-sdk/openai-compatible",
               "name": "llama.cpp (local Qwen3.6-35B)",
-              "apiKey": "unused",
-              "baseURL": "http://127.0.0.1:8080/v1",
+              "options": {
+                "baseURL": "http://127.0.0.1:8080/v1"
+              },
               "models": {
-                "Qwen3.6-35B-A3B-UD-IQ3_S": {
+                "Qwen3.6-35B-A3B-UD-IQ3_S.gguf": {
                   "name": "Qwen3.6-35B-A3B (IQ3_S)"
                 }
               }
-            }
-          },
-          "model": "llama-cpp/Qwen3.6-35B-A3B-UD-IQ3_S"
+            },
+            "opencode": {}
+          }
         }
       '';
+      };
 
       # Home Manager state version for this machine
       home.stateVersion = "25.05";

@@ -868,6 +868,17 @@
           rebuild-dry = "sudo nixos-rebuild dry-build --flake /home/brodrigues/Documents/repos/nixos-configuration#$(hostname)";
           rollback = "sudo nixos-rebuild switch --rollback";
           gc = "sudo nix-collect-garbage -d && nix-collect-garbage -d";
+
+          llamaup = "sudo systemctl start llama-server";
+          llamadown = "sudo systemctl stop llama-server";
+          llamastatus = "systemctl status llama-server";
+
+          # Incus VM management
+          vm-start = "incus start test-vm";
+          vm-stop = "incus stop test-vm";
+          vm-status = "incus list test-vm";
+          vm-shell = "incus exec test-vm -- bash";
+          vm-kill = "incus delete --force test-vm";
         };
 
         bashrcExtra = ''
@@ -1018,6 +1029,47 @@
           if [ -d "$HOME/.cargo/bin" ] ; then
             PATH="$HOME/.cargo/bin:$PATH"
           fi
+
+          # Incus Ubuntu VM helper - creates fresh VM with user 'incus'
+          vm-setup() {
+            local name="''${1:-test-vm}"
+
+            # Clean up existing VM
+            if incus info "$name" &>/dev/null; then
+              echo "Removing existing VM '$name'..."
+              incus delete --force "$name"
+            fi
+
+            # Launch fresh Ubuntu 24.04 VM
+            echo "Creating Ubuntu 24.04 VM: $name ..."
+            incus launch images:ubuntu/24.04 "$name" --vm \
+              -c limits.cpu=4 \
+              -c limits.memory=8GiB \
+              -d root,size=20GiB
+
+            # Wait for VM to be ready
+            echo "Waiting for VM to boot..."
+            for i in $(seq 1 30); do
+              if incus exec "$name" -- true &>/dev/null; then
+                break
+              fi
+              sleep 2
+            done
+
+            # Create user 'incus' with sudo
+            echo "Creating user 'incus'..."
+            incus exec "$name" -- useradd -m -s /bin/bash incus
+            incus exec "$name" -- bash -c 'echo "incus:incus" | chpasswd'
+            incus exec "$name" -- usermod -aG sudo incus
+
+            # Show result
+            local ip=$(incus list "$name" -c ipv4 --format csv | tr -d '\n')
+            echo ""
+            echo "VM ready!"
+            echo "  Login:   incus exec $name -- su - incus"
+            echo "  IP:      $ip"
+            echo "  User:    incus / incus"
+          }
         '';
 
         sessionVariables = {
