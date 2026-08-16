@@ -25,6 +25,7 @@
     ./hardware-configuration.nix
     ./cachix.nix
     ./network-watchdog.nix
+    ./daily-reboot.nix
   ]
   ++ (builtins.filter (f: builtins.pathExists f) [
     ./nvidia.nix # NVIDIA configuration (optional)
