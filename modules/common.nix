@@ -254,7 +254,7 @@
       aider-chat
       pkgs-master.antigravity
       pkgs-master.antigravity-cli
-      opencode
+      pkgs-unstable.opencode
       jq
 
       # Web & Communication

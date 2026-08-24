@@ -40,7 +40,10 @@
         system:
         import nixpkgs-unstable {
           inherit system;
-          config.allowUnfree = true;
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
+          };
         };
 
       # Apple Silicon (aarch64)

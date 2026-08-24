@@ -12,6 +12,7 @@
 {
   config,
   pkgs,
+  pkgs-unstable,
   lib,
   ...
 }:
@@ -184,11 +185,11 @@
     steamcmd # Valve command-line tool for dedicated servers/tools
 
     # AI / Local LLM
-    llama-cpp # CUDA-enabled via nixpkgs.config.cudaSupport
+    pkgs-unstable.llama-cpp # CUDA-enabled via nixpkgs.config.cudaSupport
   ];
 
   #=============================================================================
-  # AI - llama.cpp local model server (Qwen3.6-35B-A3B)
+  # AI - llama.cpp local model server (Qwen3.8-27B Uncensored IQ4_XS)
   #=============================================================================
 
   systemd.services.llama-server = {
@@ -196,13 +197,16 @@
     after = [ "network.target" ];
     serviceConfig = {
       ExecStart = ''
-        ${pkgs.llama-cpp}/bin/llama-server \
-          -m /var/lib/llama-cpp/Qwen3.6-35B-A3B-UD-IQ3_S.gguf \
+        ${pkgs-unstable.llama-cpp}/bin/llama-server \
+          -m /var/lib/llama-cpp/Qwen3.8-27B-Uncensored-IQ4_XS.gguf \
           --jinja \
           --host 127.0.0.1 \
           --port 8080 \
-          -ngl 99 \
-          -c 32768 \
+          -ngl 80 \
+          -c 81920 \
+          --parallel 1 \
+          --cache-type-k q4_0 \
+          --cache-type-v q4_0 \
           --temp 0.6 \
           --top-k 20 \
           --top-p 0.95
@@ -403,7 +407,7 @@
       };
 
       #---------------------------------------------------------------------------
-      # OpenCode - Qwen3.6-35B-A3B via local llama.cpp
+      # OpenCode - Qwen3.8-27B Uncensored via local llama.cpp
       #---------------------------------------------------------------------------
       home.file.".config/opencode/opencode.jsonc" = {
         force = true;
@@ -413,13 +417,13 @@
           "provider": {
             "llama.cpp": {
               "npm": "@ai-sdk/openai-compatible",
-              "name": "llama.cpp (local Qwen3.6-35B)",
+              "name": "llama.cpp (local Qwen3.8-27B Uncensored)",
               "options": {
                 "baseURL": "http://127.0.0.1:8080/v1"
               },
               "models": {
-                "Qwen3.6-35B-A3B-UD-IQ3_S.gguf": {
-                  "name": "Qwen3.6-35B-A3B (IQ3_S)"
+                "Qwen3.8-27B-Uncensored-IQ4_XS.gguf": {
+                  "name": "Qwen3.8-27B Uncensored (IQ4_XS)"
                 }
               }
             },

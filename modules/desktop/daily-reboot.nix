@@ -5,9 +5,9 @@
 }:
 {
   systemd.timers.daily-reboot = {
-    description = "Reboot the machine every day at 3:00 a.m. UTC";
+    description = "Reboot the machine every day at 4:00 a.m. UTC";
     timerConfig = {
-      OnCalendar = "*-*-* 03:00:00 UTC";
+      OnCalendar = "*-*-* 04:00:00 UTC";
       Persistent = true;
     };
     wantedBy = [ "timers.target" ];
