@@ -15,6 +15,12 @@
     # Nixpkgs Master (for cutting edge packages like antigravity)
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
+    # Nixpkgs with Cline CLI (branch add-cline)
+    nixpkgs-cline.url = "github:b-rodrigues/nixpkgs/add-cline";
+
+    # Nixpkgs with OpenCode v2 (branch opencodev2)
+    nixpkgs-opencodev2.url = "github:b-rodrigues/nixpkgs/opencodev2";
+
     # Apple Silicon support (kernel, firmware, etc.) - only used by macbook
     apple-silicon-support.url = "github:nix-community/nixos-apple-silicon/";
     apple-silicon-support.inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +35,8 @@
       nixpkgs,
       nixpkgs-unstable,
       nixpkgs-master,
+      nixpkgs-cline,
+      nixpkgs-opencodev2,
       home-manager,
       apple-silicon-support,
       iosevka-custom,
@@ -60,6 +68,20 @@
           inherit system;
           config.allowUnfree = true;
         };
+
+      mkClinePkgs =
+        system:
+        import nixpkgs-cline {
+          inherit system;
+          config.allowUnfree = true;
+        };
+
+      mkOpencodev2Pkgs =
+        system:
+        import nixpkgs-opencodev2 {
+          inherit system;
+          config.allowUnfree = true;
+        };
     in
     {
       # Desktop PC (x86_64)
@@ -69,6 +91,8 @@
           inherit inputs;
           pkgs-unstable = mkDesktopPkgs "x86_64-linux";
           pkgs-master = mkMasterPkgs "x86_64-linux";
+          pkgs-cline = mkClinePkgs "x86_64-linux";
+          pkgs-opencodev2 = mkOpencodev2Pkgs "x86_64-linux";
         };
         modules = [
           ./modules/common.nix
@@ -87,6 +111,7 @@
           inherit inputs;
           pkgs-unstable = mkMacPkgs "aarch64-linux";
           pkgs-master = mkMasterPkgs "aarch64-linux";
+          pkgs-opencodev2 = mkOpencodev2Pkgs "aarch64-linux";
         };
         modules = [
           # Apple Silicon support module

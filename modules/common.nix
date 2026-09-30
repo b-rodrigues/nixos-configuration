@@ -14,6 +14,7 @@
   pkgs,
   pkgs-unstable,
   pkgs-master,
+  pkgs-opencodev2,
   lib,
   ...
 }:
@@ -255,6 +256,7 @@
       pkgs-master.antigravity
       pkgs-master.antigravity-cli
       pkgs-unstable.opencode
+      pkgs-opencodev2.opencode2
       jq
 
       # Web & Communication
@@ -493,6 +495,190 @@
             emacsclient -n "+$line" "$file" || emacs "+$line" "$file" &
           fi
         fi
+      '')
+
+      #=============================================================================
+      # Custom Script: telegram-msg (message Telegram bot or send files)
+      # Reads token from ~/.telegram-bot-api-key so secret is not pushed to git
+      #=============================================================================
+      (pkgs.writeShellScriptBin "telegram-msg" ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        show_help() {
+          cat <<'EOF'
+telegram-msg (aliases: tg, tg-msg) - Send text messages and files to Telegram
+
+USAGE:
+  telegram-msg [OPTIONS] [MESSAGE]
+  echo "MESSAGE" | telegram-msg [OPTIONS]
+  command && tg "Success!" || tg "Failed!"
+
+OPTIONS:
+  -f, --file PATH       Send a document/file (e.g. ROM, screenshot, archive, PDF).
+                        Any accompanying [MESSAGE] is sent as the file's caption.
+  -c, --chat-id ID      Override the recipient chat ID for this command.
+  -h, --help            Show this help manual.
+
+CONFIGURATION:
+  Secrets are kept in ~/.telegram-bot-api-key (permissions 0600) so they
+  are never tracked or pushed to public Git repositories.
+
+  File format:
+    BOT_TOKEN="<your-bot-token>"
+    CHAT_ID="<your-telegram-chat-id>"
+
+  Alternatively, a simple two-line format is supported:
+    Line 1: Bot token (e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ)
+    Line 2: Chat ID (e.g. 27584996)
+
+HOW TO SETUP A TELEGRAM BOT:
+  1. Open Telegram and message @BotFather:
+     - Send: /newbot
+     - Choose a name and a username ending in 'bot'
+     - Copy the HTTP API token provided.
+  2. Start your bot:
+     - Open a chat with your new bot and click "Start" (or send /start).
+  3. Find your Chat ID:
+     - Start a chat with @userinfobot to see your ID.
+  4. Save credentials to ~/.telegram-bot-api-key:
+     echo 'BOT_TOKEN="<token>"' > ~/.telegram-bot-api-key
+     echo 'CHAT_ID="<id>"' >> ~/.telegram-bot-api-key
+     chmod 600 ~/.telegram-bot-api-key
+
+EXAMPLES:
+  # Simple text notification
+  tg "System backup completed at $(date)"
+
+  # Multi-word string without quotes
+  tg Hello from my terminal
+
+  # Pipe standard output
+  rebuild-dry 2>&1 | tg
+
+  # Send a file with an optional caption
+  tg -f ./Hyper-Metroid-Super.sfc "Here is the patched ROM"
+
+  # Send to an alternate chat ID
+  tg -c 123456789 "Special alert"
+EOF
+          exit 0
+        }
+
+        # Check for help flag before anything else
+        for arg in "$@"; do
+          case "$arg" in
+            -h|--help)
+              show_help
+              ;;
+          esac
+        done
+
+        KEY_FILE="$HOME/.telegram-bot-api-key"
+
+        if [ ! -f "$KEY_FILE" ]; then
+          echo "Error: Telegram API key file not found at $KEY_FILE" >&2
+          echo "Run 'telegram-msg --help' for setup instructions." >&2
+          exit 1
+        fi
+
+        TOKEN=""
+        CHAT_ID=""
+
+        if grep -q "BOT_TOKEN=" "$KEY_FILE" 2>/dev/null; then
+          TOKEN=$(grep -E "^(TELEGRAM_)?BOT_TOKEN=" "$KEY_FILE" | head -n1 | cut -d= -f2- | tr -d "[:space:]\"\047")
+        fi
+        if [ -z "$TOKEN" ]; then
+          TOKEN=$(head -n1 "$KEY_FILE" | tr -d "[:space:]\"\047")
+        fi
+
+        if [ -n "''${TELEGRAM_CHAT_ID:-}" ]; then
+          CHAT_ID="$TELEGRAM_CHAT_ID"
+        elif grep -q "CHAT_ID=" "$KEY_FILE" 2>/dev/null; then
+          CHAT_ID=$(grep -E "^(TELEGRAM_)?CHAT_ID=" "$KEY_FILE" | head -n1 | cut -d= -f2- | tr -d "[:space:]\"\047")
+        fi
+
+        if [ -z "$CHAT_ID" ]; then
+          LINE2=$(sed -n "2p" "$KEY_FILE" | tr -d "[:space:]\"\047")
+          if [[ "$LINE2" =~ ^-?[0-9]+$ ]]; then
+            CHAT_ID="$LINE2"
+          else
+            CHAT_ID="27584996"
+          fi
+        fi
+
+        if [ -z "$TOKEN" ]; then
+          echo "Error: Could not extract bot token from $KEY_FILE" >&2
+          exit 1
+        fi
+
+        FILE=""
+        MESSAGE=""
+
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            -f|--file)
+              FILE="$2"
+              shift 2
+              ;;
+            -c|--chat-id)
+              CHAT_ID="$2"
+              shift 2
+              ;;
+            -h|--help)
+              show_help
+              ;;
+            *)
+              if [ -z "$MESSAGE" ]; then
+                MESSAGE="$1"
+              else
+                MESSAGE="$MESSAGE $1"
+              fi
+              shift
+              ;;
+          esac
+        done
+
+        if [ -z "$FILE" ] && [ -z "$MESSAGE" ]; then
+          if [ ! -t 0 ]; then
+            MESSAGE=$(cat)
+          else
+            echo "Usage: telegram-msg [-f FILE] [-c CHAT_ID] [MESSAGE]" >&2
+            echo "       echo \"MESSAGE\" | telegram-msg" >&2
+            exit 1
+          fi
+        fi
+
+        if [ -n "$FILE" ]; then
+          if [ ! -f "$FILE" ]; then
+            echo "Error: File $FILE not found." >&2
+            exit 1
+          fi
+          if [ -n "$MESSAGE" ]; then
+            ${pkgs.curl}/bin/curl -s -S --fail \
+              -F chat_id="$CHAT_ID" \
+              -F caption="$MESSAGE" \
+              -F document=@"$FILE" \
+              "https://api.telegram.org/bot''${TOKEN}/sendDocument" > /dev/null
+          else
+            ${pkgs.curl}/bin/curl -s -S --fail \
+              -F chat_id="$CHAT_ID" \
+              -F document=@"$FILE" \
+              "https://api.telegram.org/bot''${TOKEN}/sendDocument" > /dev/null
+          fi
+          echo "File sent to Telegram: $FILE"
+        else
+          ${pkgs.curl}/bin/curl -s -S --fail \
+            -F chat_id="$CHAT_ID" \
+            -F text="$MESSAGE" \
+            "https://api.telegram.org/bot''${TOKEN}/sendMessage" > /dev/null
+          echo "Message sent to Telegram."
+        fi
+      '')
+
+      (pkgs.writeShellScriptBin "tg-msg" ''
+        #!/usr/bin/env bash
+        exec telegram-msg "$@"
       '')
     ];
 
@@ -873,12 +1059,19 @@
           llamadown = "sudo systemctl stop llama-server";
           llamastatus = "systemctl status llama-server";
 
+          bonsaiup = "sudo systemctl start llama-server-bonsai";
+          bonsaidown = "sudo systemctl stop llama-server-bonsai";
+          bonsaistatus = "systemctl status llama-server-bonsai";
+
           # Incus VM management
           vm-start = "incus start test-vm";
           vm-stop = "incus stop test-vm";
           vm-status = "incus list test-vm";
           vm-shell = "incus exec test-vm -- bash";
           vm-kill = "incus delete --force test-vm";
+
+          # Telegram bot messaging
+          tg = "telegram-msg";
         };
 
         bashrcExtra = ''

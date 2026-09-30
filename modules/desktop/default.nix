@@ -13,6 +13,7 @@
   config,
   pkgs,
   pkgs-unstable,
+  pkgs-cline,
   lib,
   ...
 }:
@@ -186,10 +187,15 @@
 
     # AI / Local LLM
     pkgs-unstable.llama-cpp # CUDA-enabled via nixpkgs.config.cudaSupport
+    pkgs-cline.cline # Autonomous coding agent CLI
   ];
 
   #=============================================================================
   # AI - llama.cpp local model server (Qwen3.8-27B Uncensored IQ4_XS)
+  # Inspired by Qwen3.8 16GB VRAM recipe (temperature 0.6, top-k 20, top-p 0.95,
+  # flash-attn enabled, int4 KV cache, reasoning preservation).
+  # With 13GB IQ4_XS weights on 16GB VRAM, context is tuned to 32k to prevent
+  # spilling into system RAM. Lower quants (e.g. IQ3_M / EXL3 2.5bpw) allow 80k-176k+.
   #=============================================================================
 
   systemd.services.llama-server = {
@@ -203,13 +209,57 @@
           --host 127.0.0.1 \
           --port 8080 \
           -ngl 80 \
-          -c 81920 \
+          --flash-attn on \
+          --spec-type draft-mtp \
+          --spec-draft-n-max 3 \
+          -c 32768 \
           --parallel 1 \
           --cache-type-k q4_0 \
           --cache-type-v q4_0 \
           --temp 0.6 \
           --top-k 20 \
-          --top-p 0.95
+          --top-p 0.95 \
+          --reasoning-preserve
+      '';
+      User = "brodrigues";
+      Restart = "on-failure";
+      RestartSec = "5";
+      StateDirectory = "llama-cpp";
+      StateDirectoryMode = "0755";
+    };
+  };
+
+  #=============================================================================
+  # AI - llama.cpp local model server #2 (Ternary-Bonsai-27B Q2_g64)
+  # 27B-class ternary reasoning model (~7.2GB deployed). Q2_g64 is the pack
+  # repacked for upstream llama.cpp (matches this repo's nixpkgs llama-cpp).
+  # The full 262144-token architectural context only fits 16GB VRAM with the
+  # 4-bit KV cache below (~12.8GB peak per the model card).
+  # Model card sampling: temp 0.7, top-k 20, top-p 0.95 (thinking mode).
+  # Cannot be VRAM-resident alongside the Qwen service; run one at a time.
+  #=============================================================================
+
+  systemd.services.llama-server-bonsai = {
+    description = "llama.cpp OpenAI-compatible API server (Ternary-Bonsai-27B)";
+    after = [ "network.target" ];
+    serviceConfig = {
+      ExecStart = ''
+        ${pkgs-unstable.llama-cpp}/bin/llama-server \
+          -m /var/lib/llama-cpp/Ternary-Bonsai-27B-Q2_g64.gguf \
+          --alias ternary-bonsai-27B \
+          --jinja \
+          --host 127.0.0.1 \
+          --port 8081 \
+          -ngl 99 \
+          --flash-attn on \
+          -c 262144 \
+          --parallel 1 \
+          --cache-type-k q4_0 \
+          --cache-type-v q4_0 \
+          --temp 0.7 \
+          --top-k 20 \
+          --top-p 0.95 \
+          --reasoning-preserve
       '';
       User = "brodrigues";
       Restart = "on-failure";
@@ -407,7 +457,7 @@
       };
 
       #---------------------------------------------------------------------------
-      # OpenCode - Qwen3.8-27B Uncensored via local llama.cpp
+      # OpenCode - local llama.cpp models (Qwen3.8-27B, Ternary-Bonsai-27B)
       #---------------------------------------------------------------------------
       home.file.".config/opencode/opencode.jsonc" = {
         force = true;
@@ -423,7 +473,29 @@
               },
               "models": {
                 "Qwen3.8-27B-Uncensored-IQ4_XS.gguf": {
-                  "name": "Qwen3.8-27B Uncensored (IQ4_XS)"
+                  "name": "Qwen3.8-27B Uncensored (IQ4_XS)",
+                  "reasoning": true,
+                  "limit": {
+                    "context": 32768,
+                    "output": 8192
+                  }
+                }
+              }
+            },
+            "llama-bonsai": {
+              "npm": "@ai-sdk/openai-compatible",
+              "name": "llama.cpp (local Ternary-Bonsai-27B)",
+              "options": {
+                "baseURL": "http://127.0.0.1:8081/v1"
+              },
+              "models": {
+                "ternary-bonsai-27B": {
+                  "name": "Ternary-Bonsai-27B (Q2_g64)",
+                  "reasoning": true,
+                  "limit": {
+                    "context": 262144,
+                    "output": 32768
+                  }
                 }
               }
             },
