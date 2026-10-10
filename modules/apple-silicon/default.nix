@@ -12,6 +12,7 @@
   config,
   pkgs,
   lib,
+  pkgs-master,
   ...
 }:
 
@@ -25,6 +26,13 @@
     ./cachix.nix
   ];
 
+  # Overlay avd-fw from nixpkgs-master if not present in current nixpkgs stable channel
+  nixpkgs.overlays = [
+    (final: prev: {
+      avd-fw = prev.avd-fw or pkgs-master.avd-fw;
+    })
+  ];
+
   #=============================================================================
   # APPLE SILICON SPECIFIC
   #=============================================================================
@@ -33,6 +41,10 @@
   # GPU support is now in mainline mesa, no extra config needed
   # Firmware copied from /boot/asahi into repo for flake compatibility
   hardware.asahi.peripheralFirmwareDirectory = ./firmware;
+
+  # Apple Video Decoder (AVD) hardware acceleration (H.264, HEVC, VP9)
+  hardware.asahi.avd.enable = lib.mkDefault true;
+  hardware.asahi.avd.vaapi-support = true;
 
   #=============================================================================
   # BOOT CONFIGURATION - Apple Silicon specific
