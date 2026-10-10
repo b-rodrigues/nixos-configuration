@@ -29,6 +29,7 @@
   # APPLE SILICON SPECIFIC
   #=============================================================================
 
+  hardware.asahi.enable = true;
   # GPU support is now in mainline mesa, no extra config needed
   # Firmware copied from /boot/asahi into repo for flake compatibility
   hardware.asahi.peripheralFirmwareDirectory = ./firmware;
