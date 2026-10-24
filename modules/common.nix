@@ -276,13 +276,17 @@
       jq
 
       # Web & Communication
-      # On NVIDIA + Wayland, Chromium's default ANGLE (EGL/GLES) path fails to
-      # turn decoded video frames into EGLImages, so affected videos show up as
-      # a solid green rectangle while others (e.g. YouTube) play fine. Forcing
-      # ANGLE's native OpenGL backend avoids that broken import path.
-      # Note: reverse this if NVIDIA/Chromium later fix the driver path.
+      # Chromium-based browsers render an all-zero video surface as solid green.
+      # That happens whenever the zero-copy frame path hands the GPU a buffer
+      # that never receives the decoded picture -- Chromium's frame-pool order
+      # (create surface, export dma-buf, import, then decode) is exactly what
+      # breaks on both of this repo's GPU stacks (Asahi AVD/V4L2, NVIDIA EGL).
+      # Decoding in software skips that import path entirely, so affected videos
+      # (X/Twitter, embedded players) render correctly again. YouTube was never
+      # hit the same way because it usually ends up on a software-decoded codec.
+      # Note: reverse this once the platform video paths are fixed upstream.
       (pkgs-unstable.brave.override {
-        commandLineArgs = "--use-angle=gl";
+        commandLineArgs = "--disable-accelerated-video-decode";
       })
 
       # System Utilities
