@@ -276,7 +276,14 @@
       jq
 
       # Web & Communication
-      pkgs-unstable.brave
+      # On NVIDIA + Wayland, Chromium's default ANGLE (EGL/GLES) path fails to
+      # turn decoded video frames into EGLImages, so affected videos show up as
+      # a solid green rectangle while others (e.g. YouTube) play fine. Forcing
+      # ANGLE's native OpenGL backend avoids that broken import path.
+      # Note: reverse this if NVIDIA/Chromium later fix the driver path.
+      (pkgs-unstable.brave.override {
+        commandLineArgs = "--use-angle=gl";
+      })
 
       # System Utilities
       cachix
