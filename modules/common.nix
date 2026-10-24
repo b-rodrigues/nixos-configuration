@@ -276,17 +276,18 @@
       jq
 
       # Web & Communication
-      # Chromium-based browsers render an all-zero video surface as solid green.
-      # That happens whenever the zero-copy frame path hands the GPU a buffer
-      # that never receives the decoded picture -- Chromium's frame-pool order
-      # (create surface, export dma-buf, import, then decode) is exactly what
-      # breaks on both of this repo's GPU stacks (Asahi AVD/V4L2, NVIDIA EGL).
-      # Decoding in software skips that import path entirely, so affected videos
-      # (X/Twitter, embedded players) render correctly again. YouTube was never
-      # hit the same way because it usually ends up on a software-decoded codec.
-      # Note: reverse this once the platform video paths are fixed upstream.
+      # Chromium renders an all-zero video surface as solid green. It creates a
+      # surface, exports it as a dma-buf, imports it into the GPU and only then
+      # decodes into it; when the driver writes to its own buffers instead, the
+      # frame the browser samples stays zeroed, which is exactly what the
+      # NVIDIA stack does. Software decoding skips that import path, so affected
+      # videos (X/Twitter, embedded players) render again; YouTube was never hit
+      # because it usually ends up on a software-decoded codec.
+      # The macbook does not need this: modules/apple-silicon replaces
+      # libva-v4l2_request with a fork that decodes into the exported buffers,
+      # so hardware decoding works there and is left enabled.
       (pkgs-unstable.brave.override {
-        commandLineArgs = "--disable-accelerated-video-decode";
+        commandLineArgs = lib.optionalString (!(config.hardware.asahi.enable or false)) "--disable-accelerated-video-decode";
       })
 
       # System Utilities

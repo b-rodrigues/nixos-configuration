@@ -30,6 +30,28 @@
   nixpkgs.overlays = [
     (final: prev: {
       avd-fw = prev.avd-fw or pkgs-master.avd-fw;
+
+      # nixpkgs packages libva-v4l2_request at sofus13's 1.3 tag, which decodes
+      # into buffers it allocates itself. Chromium instead creates a surface,
+      # exports it as a dma-buf, imports it into the GPU and only then decodes
+      # into it, so the buffers the browser samples stay all-zero -- solid green
+      # video (X/Twitter, embedded players) while audio and the timeline look
+      # fine. mpv/FFmpeg never hit this because they decode in their own order.
+      # This fork decodes into the client's exported surfaces; it also carries
+      # further AVD fixes (HEVC slice parsing, 10-bit backing, firmware hangs).
+      # Revert to `prev` if AVD playback regresses.
+      libva-v4l2_request-sofus13 = prev.libva-v4l2_request-sofus13.overrideAttrs (
+        old: rec {
+          version = "1.3.r11";
+          name = "${old.pname}-${version}";
+          src = final.fetchFromGitHub {
+            owner = "omacom";
+            repo = "libva-v4l2_request";
+            rev = "4f60c51f7841dd74bb61c94a4ad31e630bbdab01";
+            hash = "sha256-+M2XnhPP/vdNZqBZcQ1nk/EXZFHdDGPAbvF67AK1J5A=";
+          };
+        }
+      );
     })
   ];
 
