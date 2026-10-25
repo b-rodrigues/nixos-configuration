@@ -1,0 +1,59 @@
+{
+	"hosts": {
+		"nixos-desktop": "100.119.230.8",
+		"macbook":       "100.123.69.62",
+		"pixel-8":       "100.102.86.44",
+	},
+
+	"tagOwners": {"tag:agent": ["autogroup:admin", "b-rodrigues@github"]},
+
+	"grants": [
+		{
+			"src": ["autogroup:member"],
+			"dst": ["nixos-desktop"],
+			"ip":  ["22"],
+		},
+		{
+			"src": ["autogroup:member"],
+			"dst": ["macbook"],
+			"ip":  ["*"],
+		},
+		{
+			"src": ["autogroup:member"],
+			"dst": ["pixel-8"],
+			"ip":  ["*"],
+		},
+		{
+			"src": ["tag:agent"],
+			"dst": ["autogroup:internet"],
+			"ip":  ["*"],
+		},
+	],
+
+	"ssh": [
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["tag:agent"],
+			"users":  ["autogroup:nonroot", "root"],
+		},
+		{
+			"action": "check",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self"],
+			"users":  ["autogroup:nonroot", "root"],
+		},
+	],
+
+	"tests": [
+		{
+			"src":    "b-rodrigues@github",
+			"accept": ["100.119.230.8:22", "100.123.69.62:22", "100.102.86.44:22"],
+		},
+		{
+			"src":    "tag:agent",
+			"accept": ["8.8.8.8:443"],
+			"deny":   ["100.123.69.62:22", "100.102.86.44:22", "100.119.230.8:22"],
+		},
+	],
+}
