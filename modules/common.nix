@@ -15,6 +15,7 @@
   pkgs-unstable,
   pkgs-master,
   pkgs-opencodev2,
+  pkgs-freebuff,
   lib,
   ...
 }:
@@ -273,6 +274,7 @@
       pkgs-master.antigravity-cli
       pkgs-unstable.opencode
       pkgs-opencodev2.opencode2
+      pkgs-freebuff.freebuff
       jq
 
       # Web & Communication

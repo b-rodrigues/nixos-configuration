@@ -13,7 +13,6 @@
   config,
   pkgs,
   pkgs-unstable,
-  pkgs-cline,
   lib,
   ...
 }:
@@ -187,7 +186,6 @@
 
     # AI / Local LLM
     pkgs-unstable.llama-cpp # CUDA-enabled via nixpkgs.config.cudaSupport
-    pkgs-cline.cline # Autonomous coding agent CLI
   ];
 
   #=============================================================================

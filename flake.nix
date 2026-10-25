@@ -15,8 +15,8 @@
     # Nixpkgs Master (for cutting edge packages like antigravity)
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
-    # Nixpkgs with Cline CLI (branch add-cline)
-    nixpkgs-cline.url = "github:b-rodrigues/nixpkgs/add-cline";
+    # Nixpkgs with Freebuff CLI (branch add-freebuff)
+    nixpkgs-freebuff.url = "github:b-rodrigues/nixpkgs/add-freebuff";
 
     # Nixpkgs with OpenCode v2 (branch opencodev2)
     nixpkgs-opencodev2.url = "github:b-rodrigues/nixpkgs/opencodev2";
@@ -35,7 +35,7 @@
       nixpkgs,
       nixpkgs-unstable,
       nixpkgs-master,
-      nixpkgs-cline,
+      nixpkgs-freebuff,
       nixpkgs-opencodev2,
       home-manager,
       apple-silicon-support,
@@ -69,9 +69,9 @@
           config.allowUnfree = true;
         };
 
-      mkClinePkgs =
+      mkFreebuffPkgs =
         system:
-        import nixpkgs-cline {
+        import nixpkgs-freebuff {
           inherit system;
           config.allowUnfree = true;
         };
@@ -91,7 +91,7 @@
           inherit inputs;
           pkgs-unstable = mkDesktopPkgs "x86_64-linux";
           pkgs-master = mkMasterPkgs "x86_64-linux";
-          pkgs-cline = mkClinePkgs "x86_64-linux";
+          pkgs-freebuff = mkFreebuffPkgs "x86_64-linux";
           pkgs-opencodev2 = mkOpencodev2Pkgs "x86_64-linux";
         };
         modules = [
@@ -111,6 +111,7 @@
           inherit inputs;
           pkgs-unstable = mkMacPkgs "aarch64-linux";
           pkgs-master = mkMasterPkgs "aarch64-linux";
+          pkgs-freebuff = mkFreebuffPkgs "aarch64-linux";
           pkgs-opencodev2 = mkOpencodev2Pkgs "aarch64-linux";
         };
         modules = [
