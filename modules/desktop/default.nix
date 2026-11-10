@@ -278,6 +278,10 @@
 
   home-manager.users.brodrigues =
     { pkgs, ... }:
+    let
+      # Shared bar definition (modules/home/waybar-base.nix)
+      waybarBase = pkgs.callPackage ../home/waybar-base.nix { };
+    in
     {
       #---------------------------------------------------------------------------
       # LOCAL AI - llama.cpp server control + Incus VM helpers (desktop only)
@@ -348,101 +352,10 @@
 
       programs.waybar = {
         enable = true;
-        settings = {
-          mainBar = {
-            layer = "top";
-            position = "top";
-            height = 32;
-            spacing = 4;
 
-            # Standard centered layout
-            modules-left = [ "hyprland/workspaces" ];
-            modules-center = [ "clock" ];
-            modules-right = [
-              "cpu"
-              "memory"
-              "wireplumber"
-              "tray"
-              "custom/power"
-            ];
-
-            "hyprland/workspaces" = {
-              disable-scroll = true;
-              all-outputs = true;
-              format = "{name}";
-            };
-
-            cpu = {
-              format = "cpu: {usage}%";
-              tooltip-format = "CPU: {usage}%";
-              interval = 1;
-              states = {
-                warning = 70;
-                critical = 90;
-              };
-            };
-
-            memory = {
-              format = "mem: {used:0.1f}G";
-              interval = 1;
-              tooltip = true;
-              tooltip-format = "Memory: {used:0.1f}G / {total:0.1f}G ({percentage}%)";
-              on-click = "ghostty htop";
-            };
-
-            wireplumber = {
-              format = "vol: {volume}%";
-              format-muted = "vol: muted";
-              scroll-step = 5;
-              on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-              on-click-right = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 100%";
-              tooltip = true;
-              tooltip-format = "{node_name}";
-            };
-
-            "custom/power" = {
-              format = "⏻";
-              tooltip = false;
-              on-click = "rofi -show power-menu -modi power-menu:${pkgs.writeShellScript "rofi-power-menu" ''
-                #!/bin/sh
-
-                case $1 in
-                  "")
-                    echo "logout"
-                    echo "reboot"
-                    echo "shutdown"
-                    ;;
-                  "logout")
-                    hyprctl dispatch exit
-                    ;;
-                  "reboot")
-                    systemctl reboot
-                    ;;
-                  "shutdown")
-                    systemctl poweroff
-                    ;;
-                esac
-              ''}";
-            };
-
-            clock = {
-              timezone = "Europe/Luxembourg";
-              format = "{:%a %d %b  %H:%M}";
-              interval = 60;
-              on-click = "show-calendar";
-              tooltip-format = "<span>{calendar}</span>";
-              calendar = {
-                mode = "month";
-                format = {
-                  months = "<span color='#d33682'><b>{}</b></span>";
-                  days = "<span color='#839496'><b>{}</b></span>";
-                  weekdays = "<span color='#859900'><b>{}</b></span>";
-                  today = "<span color='#b58900'><b>{}</b></span>";
-                };
-              };
-            };
-          };
-        };
+        # Shared bar definition (modules/home/waybar-base.nix) - this
+        # host uses the defaults. `style` below is its own CSS.
+        settings.mainBar = waybarBase.mkMainBar { };
 
         style = ''
           * {
