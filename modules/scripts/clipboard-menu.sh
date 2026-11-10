@@ -36,4 +36,3 @@ if [ -n "$chosen" ]; then
     echo "$chosen" | cliphist decode | wl-copy
     notify-send "Clipboard" "Item copied to clipboard" -t 2000
 fi
-

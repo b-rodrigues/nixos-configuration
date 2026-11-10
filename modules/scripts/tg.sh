@@ -501,4 +501,3 @@ EOF
             echo "Message sent to Telegram."
           fi
         fi
-

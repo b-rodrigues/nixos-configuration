@@ -26,4 +26,3 @@ if [ -n "$query" ]; then
     emacsclient -n "+$line" "$file" || emacs "+$line" "$file" &
   fi
 fi
-

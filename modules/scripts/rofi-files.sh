@@ -35,4 +35,3 @@ if [ -n "$selected" ]; then
       ;;
   esac
 fi
-

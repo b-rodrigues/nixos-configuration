@@ -18,4 +18,3 @@ if [ ! -d "$NIXPKGS_PATH" ]; then
     rm "${COMMIT_HASH}.tar.gz"
 fi
 nix-shell -I nixpkgs="./${NIXPKGS_PATH}" -p "${PACKAGES[@]}"
-

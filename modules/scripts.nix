@@ -19,10 +19,10 @@ let
     if bins == [ ] then
       pkgs.writeShellScriptBin name (builtins.readFile (./scripts + "/${name}.sh"))
     else
-      pkgs.writeShellScriptBin name ''
-        export PATH=${lib.makeBinPath bins}:$PATH
-        ${builtins.readFile (./scripts + "/${name}.sh")}
-      '';
+      pkgs.writeShellScriptBin name (lib.concatStringsSep "\n" [
+        "export PATH=${lib.makeBinPath bins}:$PATH"
+        (builtins.readFile (./scripts + "/${name}.sh"))
+      ]);
 in
 {
   environment.systemPackages = [

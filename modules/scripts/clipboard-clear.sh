@@ -6,4 +6,3 @@ if [ "$choice" = "Yes" ]; then
     cliphist wipe
     notify-send "Clipboard" "History cleared" -t 2000
 fi
-
