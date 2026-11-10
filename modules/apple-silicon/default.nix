@@ -26,10 +26,11 @@
     ./cachix.nix
   ];
 
-  # Overlay avd-fw from nixpkgs-master if not present in current nixpkgs stable channel
+  # Overlay avd-fw and asahi-va-driver from nixpkgs-master if not present in current nixpkgs stable channel
   nixpkgs.overlays = [
     (final: prev: {
       avd-fw = prev.avd-fw or pkgs-master.avd-fw;
+      asahi-va-driver = prev.asahi-va-driver or pkgs-master.asahi-va-driver;
 
       # nixpkgs packages libva-v4l2_request at sofus13's 1.3 tag, which decodes
       # into buffers it allocates itself. Chromium instead creates a surface,

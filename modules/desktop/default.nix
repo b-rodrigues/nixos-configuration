@@ -27,6 +27,7 @@
     ./cachix.nix
     ./network-watchdog.nix
     ./daily-reboot.nix
+    ./tg-monitor.nix
   ]
   ++ (builtins.filter (f: builtins.pathExists f) [
     ./nvidia.nix # NVIDIA configuration (optional)
@@ -186,6 +187,10 @@
 
     # AI / Local LLM
     pkgs-unstable.llama-cpp # CUDA-enabled via nixpkgs.config.cudaSupport
+
+    # Lichii (Frizti fork) Switch emulator; built from unstable (needs recent
+    # cmake/SDL3/Qt6). Packaged in ./fritchii.
+    (pkgs-unstable.callPackage ./fritchii { })
   ];
 
   #=============================================================================

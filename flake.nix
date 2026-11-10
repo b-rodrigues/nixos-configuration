@@ -8,6 +8,10 @@
     # For packages from unstable (like Brave)
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # Pinned stable branch for Brave (re-added via #584546; nixos-26.05
+    # channel has not caught up yet). Only Brave is taken from here.
+    nixpkgs-brave.url = "github:NixOS/nixpkgs/release-26.05";
+
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -41,6 +45,7 @@
     inputs@{
       nixpkgs,
       nixpkgs-unstable,
+      nixpkgs-brave,
       nixpkgs-master,
       nixpkgs-freebuff,
       nixpkgs-opencodev2,
@@ -89,6 +94,13 @@
           inherit system;
           config.allowUnfree = true;
         };
+
+      mkBravePkgs =
+        system:
+        import nixpkgs-brave {
+          inherit system;
+          config.allowUnfree = true;
+        };
     in
     {
       # Desktop PC (x86_64)
@@ -97,6 +109,7 @@
         specialArgs = {
           inherit inputs;
           pkgs-unstable = mkDesktopPkgs "x86_64-linux";
+          pkgs-brave = mkBravePkgs "x86_64-linux";
           pkgs-master = mkMasterPkgs "x86_64-linux";
           pkgs-freebuff = mkFreebuffPkgs "x86_64-linux";
           pkgs-opencodev2 = mkOpencodev2Pkgs "x86_64-linux";
@@ -117,6 +130,7 @@
         specialArgs = {
           inherit inputs;
           pkgs-unstable = mkMacPkgs "aarch64-linux";
+          pkgs-brave = mkBravePkgs "aarch64-linux";
           pkgs-master = mkMasterPkgs "aarch64-linux";
           pkgs-freebuff = mkFreebuffPkgs "aarch64-linux";
           pkgs-opencodev2 = mkOpencodev2Pkgs "aarch64-linux";
