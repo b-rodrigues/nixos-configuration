@@ -12,7 +12,6 @@
 {
   config,
   pkgs,
-  pkgs-unstable,
   pkgs-brave,
   pkgs-master,
   pkgs-opencodev2,
@@ -288,9 +287,7 @@
 
       # Development & AI Tools
       aider-chat
-      pkgs-master.antigravity
       pkgs-master.antigravity-cli
-      pkgs-unstable.opencode
       pkgs-opencodev2.opencode2
       pkgs-freebuff.freebuff
       jq
