@@ -18,7 +18,8 @@ modules/
 ├── scripts.nix             # writeShellScriptBin wrappers (PATH preludes)
 ├── pkgs/freebuff/          # Vendored freebuff package (was a dedicated nixpkgs fork input)
 ├── home/
-│   ├── base.nix            # Shared home-manager config (shell, Hyprland, themes, tools)
+│   ├── base.nix            # Shared home-manager config (shell, Hyprland, tools)
+│   ├── theme.nix           # Solarized Dark palette - single source for all colors
 │   └── waybar-base.nix     # Shared waybar top bar; hosts pass overrides
 ├── apple-silicon/          # Mac-specific: Asahi firmware, notch waybar, avd-fw bridge
 └── desktop/                # Desktop-specific: NVIDIA/32-bit, libvirtd, llama servers, waybar
@@ -57,7 +58,9 @@ gc
 ## Features
 
 - **Hyprland** window manager with BÉPO keyboard layout
-- **Solarized Dark** theme throughout (Starship, Ghostty, Qt/GTK)
+- **Solarized Dark** theme throughout — single-sourced in
+  [`modules/home/theme.nix`](modules/home/theme.nix) and interpolated into kdeglobals, dunst,
+  fzf, starship, hyprland, ghostty and the waybar CSS
 - **fzf** keybindings: Ctrl+F (file path), Ctrl+G (cd), Ctrl+Y (copy), Ctrl+R (history)
 - **rofi** scripts: Super+O (find files), Super+G (grep in files)
 - **Desktop only:** llama.cpp model servers (`llamaup`/`down`/`status`, bonsai variants),

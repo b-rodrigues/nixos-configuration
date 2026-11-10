@@ -281,6 +281,8 @@
     let
       # Shared bar definition (modules/home/waybar-base.nix)
       waybarBase = pkgs.callPackage ../home/waybar-base.nix { };
+      # Solarized Dark palette for the CSS below (modules/home/theme.nix)
+      hex = (import ../home/theme.nix).hex;
     in
     {
       #---------------------------------------------------------------------------
@@ -367,9 +369,9 @@
           }
 
           window#waybar {
-            background-color: #002b36;
-            border-bottom: 2px solid #073642;
-            color: #839496;
+            background-color: #${hex.base03};
+            border-bottom: 2px solid #${hex.base02};
+            color: #${hex.base0};
             transition-property: background-color;
             transition-duration: .5s;
           }
@@ -377,63 +379,63 @@
           #workspaces button {
             padding: 0 8px;
             background-color: transparent;
-            color: #586e75;
+            color: #${hex.base01};
             border: none;
             border-radius: 0;
           }
 
           #workspaces button:hover {
-            background-color: #073642;
-            color: #839496;
+            background-color: #${hex.base02};
+            color: #${hex.base0};
           }
 
           #workspaces button.active {
-            background-color: #d33682;
-            color: #fdf6e3;
-            border-bottom: 2px solid #dc322f;
+            background-color: #${hex.magenta};
+            color: #${hex.base3};
+            border-bottom: 2px solid #${hex.red};
           }
 
           #cpu, #memory, #clock, #wireplumber, #tray {
             padding: 0 10px;
-            color: #839496;
+            color: #${hex.base0};
             margin: 0 2px;
           }
 
           #cpu {
-            color: #268bd2;
+            color: #${hex.blue};
           }
 
           #memory {
-            color: #859900;
+            color: #${hex.green};
           }
 
           #wireplumber {
-            color: #cb4b16;
+            color: #${hex.orange};
           }
 
           #wireplumber.muted {
-            color: #dc322f;
+            color: #${hex.red};
           }
 
           #clock {
-            color: #b58900;
+            color: #${hex.yellow};
             font-weight: bold;
           }
 
           #custom-power {
-            color: #dc322f;
+            color: #${hex.red};
             font-size: 14px;
             padding: 0 12px;
           }
 
           #tray {
-            color: #6c71c4;
+            color: #${hex.violet};
           }
 
           tooltip {
-            background-color: #073642;
-            color: #839496;
-            border: 1px solid #586e75;
+            background-color: #${hex.base02};
+            color: #${hex.base0};
+            border: 1px solid #${hex.base01};
             border-radius: 3px;
           }
         '';

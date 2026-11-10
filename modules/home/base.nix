@@ -10,6 +10,13 @@
 {
   home-manager.users.brodrigues =
     { pkgs, ... }:
+    let
+      # Solarized Dark palette (modules/home/theme.nix) - single source of
+      # truth for the theme colors used below and by the host waybar CSS.
+      theme = import ./theme.nix;
+      hex = theme.hex; # 6-digit solarized codes; CSS-style consumers add '#'
+      rgb = theme.rgb; # "R,G,B" triplet form consumed by kdeglobals
+    in
     {
       # home.stateVersion is set in platform-specific modules
 
@@ -30,7 +37,7 @@
         force = true;
         text = ''
           [ColorEffects:Disabled]
-          Color=0,43,54
+          Color=${rgb.base03}
           ColorAmount=0
           ColorEffect=0
           ContrastAmount=0.65
@@ -40,7 +47,7 @@
 
           [ColorEffects:Inactive]
           ChangeSelectionColor=true
-          Color=88,110,117
+          Color=${rgb.base01}
           ColorAmount=0.025
           ColorEffect=2
           ContrastAmount=0.1
@@ -50,116 +57,116 @@
           IntensityEffect=0
 
           [Colors:Button]
-          BackgroundAlternate=0,43,54
-          BackgroundNormal=7,54,66
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base03}
+          BackgroundNormal=${rgb.base02}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:Complementary]
-          BackgroundAlternate=0,43,54
-          BackgroundNormal=7,54,66
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base03}
+          BackgroundNormal=${rgb.base02}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:Header]
-          BackgroundAlternate=7,54,66
-          BackgroundNormal=7,54,66
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base02}
+          BackgroundNormal=${rgb.base02}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:Header][Inactive]
-          BackgroundAlternate=7,54,66
-          BackgroundNormal=7,54,66
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base02}
+          BackgroundNormal=${rgb.base02}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:Selection]
-          BackgroundAlternate=0,43,54
-          BackgroundNormal=211,54,130
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
+          BackgroundAlternate=${rgb.base03}
+          BackgroundNormal=${rgb.magenta}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
           ForegroundActive=0,0,0
-          ForegroundInactive=88,110,117
+          ForegroundInactive=${rgb.base01}
           ForegroundLink=0,0,0
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
           ForegroundNormal=0,0,0
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:Tooltip]
-          BackgroundAlternate=7,54,66
-          BackgroundNormal=7,54,66
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base02}
+          BackgroundNormal=${rgb.base02}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:View]
-          BackgroundAlternate=7,54,66
-          BackgroundNormal=0,43,54
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base02}
+          BackgroundNormal=${rgb.base03}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [Colors:Window]
-          BackgroundAlternate=7,54,66
-          BackgroundNormal=7,54,66
-          DecorationFocus=211,54,130
-          DecorationHover=211,54,130
-          ForegroundActive=211,54,130
-          ForegroundInactive=88,110,117
-          ForegroundLink=211,54,130
-          ForegroundNegative=220,50,47
-          ForegroundNeutral=203,75,22
-          ForegroundNormal=131,148,150
-          ForegroundPositive=133,153,0
-          ForegroundVisited=108,113,196
+          BackgroundAlternate=${rgb.base02}
+          BackgroundNormal=${rgb.base02}
+          DecorationFocus=${rgb.magenta}
+          DecorationHover=${rgb.magenta}
+          ForegroundActive=${rgb.magenta}
+          ForegroundInactive=${rgb.base01}
+          ForegroundLink=${rgb.magenta}
+          ForegroundNegative=${rgb.red}
+          ForegroundNeutral=${rgb.orange}
+          ForegroundNormal=${rgb.base0}
+          ForegroundPositive=${rgb.green}
+          ForegroundVisited=${rgb.violet}
 
           [General]
           ColorScheme=SolarizedDark
@@ -185,12 +192,12 @@
           ToolButtonStyleOtherToolbars=IconOnly
 
           [WM]
-          activeBackground=7,54,66
-          activeBlend=131,148,150
-          activeForeground=131,148,150
-          inactiveBackground=7,54,66
-          inactiveBlend=88,110,117
-          inactiveForeground=88,110,117
+          activeBackground=${rgb.base02}
+          activeBlend=${rgb.base0}
+          activeForeground=${rgb.base0}
+          inactiveBackground=${rgb.base02}
+          inactiveBlend=${rgb.base01}
+          inactiveForeground=${rgb.base01}
         '';
       };
 
@@ -245,7 +252,7 @@
             padding = 8;
             horizontal_padding = 8;
             frame_width = 2;
-            frame_color = "#d33682";
+            frame_color = "#${hex.magenta}";
             separator_color = "frame";
             sort = "yes";
             idle_threshold = 120;
@@ -279,21 +286,21 @@
           };
 
           urgency_low = {
-            background = "#002b36";
-            foreground = "#839496";
+            background = "#${hex.base03}";
+            foreground = "#${hex.base0}";
             timeout = 10;
           };
 
           urgency_normal = {
-            background = "#073642";
-            foreground = "#839496";
+            background = "#${hex.base02}";
+            foreground = "#${hex.base0}";
             timeout = 10;
           };
 
           urgency_critical = {
-            background = "#dc322f";
-            foreground = "#fdf6e3";
-            frame_color = "#dc322f";
+            background = "#${hex.red}";
+            foreground = "#${hex.base3}";
+            frame_color = "#${hex.red}";
             timeout = 0;
           };
         };
@@ -444,7 +451,7 @@
         # initExtra runs AFTER bashrcExtra - all custom fzf keybindings go here
         initExtra = ''
           # Set fzf default options with solarized colors
-          export FZF_DEFAULT_OPTS="--height 40% --reverse --color=bg+:#073642,bg:#002b36,spinner:#2aa198,hl:#268bd2,fg:#839496,header:#268bd2,info:#b58900,pointer:#2aa198,marker:#2aa198,fg+:#eee8d5,prompt:#b58900,hl+:#268bd2"
+          export FZF_DEFAULT_OPTS="--height 40% --reverse --color=bg+:#${hex.base02},bg:#${hex.base03},spinner:#${hex.cyan},hl:#${hex.blue},fg:#${hex.base0},header:#${hex.blue},info:#${hex.yellow},pointer:#${hex.cyan},marker:#${hex.cyan},fg+:#${hex.base2},prompt:#${hex.yellow},hl+:#${hex.blue}"
           export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 
           # Ctrl+G: Fuzzy find file and insert cd command to its parent directory
@@ -523,18 +530,18 @@
         defaultCommand = "fd --type f --hidden --follow --exclude .git";
         changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
         colors = {
-          "bg+" = "#073642";
-          bg = "#002b36";
-          spinner = "#2aa198";
-          hl = "#268bd2";
-          fg = "#839496";
-          header = "#268bd2";
-          info = "#b58900";
-          pointer = "#2aa198";
-          marker = "#2aa198";
-          "fg+" = "#eee8d5";
-          prompt = "#b58900";
-          "hl+" = "#268bd2";
+          "bg+" = "#${hex.base02}";
+          bg = "#${hex.base03}";
+          spinner = "#${hex.cyan}";
+          hl = "#${hex.blue}";
+          fg = "#${hex.base0}";
+          header = "#${hex.blue}";
+          info = "#${hex.yellow}";
+          pointer = "#${hex.cyan}";
+          marker = "#${hex.cyan}";
+          "fg+" = "#${hex.base2}";
+          prompt = "#${hex.yellow}";
+          "hl+" = "#${hex.blue}";
         };
       };
 
@@ -545,22 +552,22 @@
           # Solarized Dark color palette
           palette = "solarized_dark";
           palettes.solarized_dark = {
-            base03 = "#002b36";
-            base02 = "#073642";
-            base01 = "#586e75";
-            base00 = "#657b83";
-            base0 = "#839496";
-            base1 = "#93a1a1";
-            base2 = "#eee8d5";
-            base3 = "#fdf6e3";
-            yellow = "#b58900";
-            orange = "#cb4b16";
-            red = "#dc322f";
-            magenta = "#d33682";
-            violet = "#6c71c4";
-            blue = "#268bd2";
-            cyan = "#2aa198";
-            green = "#859900";
+            base03 = "#${hex.base03}";
+            base02 = "#${hex.base02}";
+            base01 = "#${hex.base01}";
+            base00 = "#${hex.base00}";
+            base0 = "#${hex.base0}";
+            base1 = "#${hex.base1}";
+            base2 = "#${hex.base2}";
+            base3 = "#${hex.base3}";
+            yellow = "#${hex.yellow}";
+            orange = "#${hex.orange}";
+            red = "#${hex.red}";
+            magenta = "#${hex.magenta}";
+            violet = "#${hex.violet}";
+            blue = "#${hex.blue}";
+            cyan = "#${hex.cyan}";
+            green = "#${hex.green}";
           };
 
           format = "$username$hostname$rlang$python$rust$jobs$cmd_duration$status$time$line_break$nix_shell$directory$git_branch$git_status$character";
@@ -695,7 +702,7 @@
           monitor = ",preferred,auto,auto";
 
           exec-once = [
-            "awww-daemon & sleep 1 && awww clear 073642"
+            "awww-daemon & sleep 1 && awww clear ${hex.base02}"
             "waybar"
             "nm-applet --indicator"
             "wl-paste --watch cliphist store"
@@ -719,8 +726,8 @@
             gaps_in = 0;
             gaps_out = 0;
             border_size = 1;
-            "col.active_border" = "rgb(d33682)";
-            "col.inactive_border" = "rgb(586e75)";
+            "col.active_border" = "rgb(${hex.magenta})";
+            "col.inactive_border" = "rgb(${hex.base01})";
             layout = "master";
             allow_tearing = false;
           };
@@ -836,29 +843,29 @@
         enable = true;
 
         themes.solarized-dark = {
-          background = "002b36";
-          foreground = "839496";
-          cursor-color = "93a1a1";
-          selection-background = "073642";
-          selection-foreground = "eee8d5";
+          background = hex.base03;
+          foreground = hex.base0;
+          cursor-color = hex.base1;
+          selection-background = hex.base02;
+          selection-foreground = hex.base2;
 
           palette = [
-            "0=#073642"
-            "1=#dc322f"
-            "2=#859900"
-            "3=#b58900"
-            "4=#268bd2"
-            "5=#d33682"
-            "6=#2aa198"
-            "7=#eee8d5"
-            "8=#002b36"
-            "9=#cb4b16"
-            "10=#586e75"
-            "11=#657b83"
-            "12=#839496"
-            "13=#6c71c4"
-            "14=#93a1a1"
-            "15=#fdf6e3"
+            "0=#${hex.base02}"
+            "1=#${hex.red}"
+            "2=#${hex.green}"
+            "3=#${hex.yellow}"
+            "4=#${hex.blue}"
+            "5=#${hex.magenta}"
+            "6=#${hex.cyan}"
+            "7=#${hex.base2}"
+            "8=#${hex.base03}"
+            "9=#${hex.orange}"
+            "10=#${hex.base01}"
+            "11=#${hex.base00}"
+            "12=#${hex.base0}"
+            "13=#${hex.violet}"
+            "14=#${hex.base1}"
+            "15=#${hex.base3}"
           ];
         };
 

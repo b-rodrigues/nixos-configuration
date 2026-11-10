@@ -17,6 +17,9 @@
   writeShellScript,
 }:
 let
+  # Solarized Dark palette (modules/home/theme.nix)
+  hex = (import ./theme.nix).hex;
+
   # Single copy of the power-menu script - was previously inlined verbatim in
   # both host waybar configs.
   powerMenu = writeShellScript "rofi-power-menu" (
@@ -91,10 +94,10 @@ in
         calendar = {
           mode = "month";
           format = {
-            months = "<span color='#d33682'><b>{}</b></span>";
-            days = "<span color='#839496'><b>{}</b></span>";
-            weekdays = "<span color='#859900'><b>{}</b></span>";
-            today = "<span color='#b58900'><b>{}</b></span>";
+            months = "<span color='#${hex.magenta}'><b>{}</b></span>";
+            days = "<span color='#${hex.base0}'><b>{}</b></span>";
+            weekdays = "<span color='#${hex.green}'><b>{}</b></span>";
+            today = "<span color='#${hex.yellow}'><b>{}</b></span>";
           };
         };
       };
