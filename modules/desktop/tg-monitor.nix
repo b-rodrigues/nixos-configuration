@@ -6,13 +6,16 @@
 #   1. replies instantly with "msg received, working", and
 #   2. appends it to the inbox log for the agent to pick up and act on.
 #
-# The monitor consumes `tg read -f -r -q` (modules/scripts/tg.sh): each
-# stdout line is one Telegram getUpdates payload echoed verbatim, parsed
+# The monitor consumes `tg read -f -r -q --catch-up` (modules/scripts/tg.sh):
+# each stdout line is one Telegram getUpdates payload echoed verbatim, parsed
 # with the same jq precedence the human display used (message //
-# channel_post // edited_message, same chat filter, text // caption //
-# media tag). Queued blocks contain the bare message text. Lines that fail
-# to parse yet never could start a JSON object (banners, stray noise) are
-# logged and dropped.
+# channel_post // edited_message // edited_channel_post, same chat filter
+# resolved from ~/.telegram-bot-api-key defaulting like tg to 27584996,
+# text // caption // media tag). Queued blocks contain the bare message text;
+# inbox dedupe keys on (chat, message, text) so repeated texts still queue.
+# Lines that fail to parse yet never could start a JSON object (banners,
+# stray noise) are logged and dropped; tg.sh stderr (failures/backoff) is
+# relayed to the journal without polluting the JSON stream.
 #
 # Runs as a user service (like opencode2) so it has the user's HOME
 # (credentials) and survives as long as the user session exists. Enable
@@ -48,20 +51,23 @@ let
     def resolve_chat_id():
         # Mirrors the credential parsing in modules/scripts/tg.sh so the monitor
         # filters updates against the same chat the `tg` helper targets.
-        env = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+        env = os.environ.get("TELEGRAM_CHAT_ID", "").strip().strip("\"'").strip()
         if env:
             return env
         try:
             with open(KEY_FILE) as f:
                 lines = [l.strip() for l in f if l.strip()]
         except OSError:
-            return None
+            lines = []
         for line in lines:
             if line.startswith("CHAT_ID=") or line.startswith("TELEGRAM_CHAT_ID="):
-                return line.split("=", 1)[1].strip("\"'")
+                return line.split("=", 1)[1].strip().strip("\"'").strip()
         if len(lines) >= 2 and lines[1].lstrip("-").isdigit():
-            return lines[1]
-        return None
+            return lines[1].strip()
+        # Mirror tg.sh's default: tg pins CHAT_ID="27584996" when nothing is
+        # configured. Returning None here would silently broaden the monitor
+        # to all chats, so default to the same chat instead.
+        return "27584996"
 
 
     CHAT_ID = resolve_chat_id()
@@ -89,11 +95,19 @@ let
             log("ack exception: %s" % e)
 
 
-    def handle_block(text, seen):
+    def handle_block(text, seen, dedupe_key=None, source=None):
+        if not isinstance(text, str):
+            text = str(text)
         text = text.strip("\n")
         if not text.strip():
             return seen
-        h = hashlib.sha256(text.encode()).hexdigest()
+        # Dedupe on identity (chat/message/text), not bare text: two separate
+        # "ok" messages have different message_ids and must both queue, while
+        # a redelivered update (same ids) still dedupes. Falls back to
+        # update_id when message_id is absent, and to bare text for callers
+        # without ids.
+        key = dedupe_key if dedupe_key is not None else text
+        h = hashlib.sha256(key.encode()).hexdigest()
         if h in seen:
             return seen
         seen.add(h)
@@ -101,7 +115,10 @@ let
         ts = time.strftime("%Y-%m-%d %H:%M:%S")
         with open(INBOX, "a") as f:
             f.write("[%s]\n%s\n---\n" % (ts, text))
-        log("new message queued (%d chars)" % len(text))
+        if source:
+            log("new message queued (%d chars from %s)" % (len(text), source))
+        else:
+            log("new message queued (%d chars)" % len(text))
         send_ack()
         return seen
 
@@ -109,8 +126,9 @@ let
     def extract_text(msg):
         # Same precedence the `tg` display uses (jq's text // caption // media tag).
         for key in ("text", "caption"):
-            if msg.get(key) is not None:
-                return msg[key]
+            v = msg.get(key)
+            if v is not None:
+                return v if isinstance(v, str) else str(v)
         if msg.get("photo") is not None:
             return "[Photo]"
         doc = msg.get("document")
@@ -121,7 +139,7 @@ let
 
     def handle_update(update, seen):
         msg = None
-        for key in ("message", "channel_post", "edited_message"):
+        for key in ("message", "channel_post", "edited_message", "edited_channel_post"):
             if update.get(key) is not None:
                 msg = update[key]
                 break
@@ -131,7 +149,19 @@ let
             chat = msg.get("chat") or {}
             if str(chat.get("id")) != CHAT_ID:
                 return seen  # update from another chat
-        return handle_block(extract_text(msg), seen)
+        text = extract_text(msg)
+        chat_id = str((msg.get("chat") or {}).get("id") or "")
+        message_id = msg.get("message_id")
+        update_id = update.get("update_id")
+        if message_id is not None:
+            dedupe_key = "%s:%s:%s" % (chat_id, message_id, text)
+        elif update_id is not None:
+            dedupe_key = "%s:%s" % (update_id, text)
+        else:
+            dedupe_key = text
+        frm = msg.get("from") or {}
+        source = frm.get("first_name") or frm.get("username") or (msg.get("chat") or {}).get("title")
+        return handle_block(text, seen, dedupe_key, source)
 
 
     def handle_payload(payload, seen):
@@ -159,11 +189,48 @@ let
             return seen
         try:
             payload = json.loads(text)
-        except ValueError:
+        except ValueError as e:
+            # The process-exit `rest` path can concatenate several single-line
+            # payloads; parse per line so one bad line doesn't drop its
+            # neighbours. (Pretty-printed multi-line payloads still parse via
+            # the whole-buffer attempt above.)
+            if "Extra data" in str(e):
+                for line in text.splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        pl = json.loads(line)
+                    except ValueError:
+                        log("dropping unparsed output (%d chars): %.100s" %
+                            (len(line), line.replace("\n", " ")[:100]))
+                        continue
+                    seen = handle_payload(pl, seen)
+                return seen
             log("dropping unparsed output (%d chars): %.100s" %
                 (len(text), text.replace("\n", " ")[:100]))
             return seen
         return handle_payload(payload, seen)
+
+
+    def drain_stderr(p):
+        # tg.sh logs failures/backoff to stderr; relay to our log without
+        # polluting the stdout JSON stream. Only called when select reports
+        # the fd readable (plus a bounded drain on idle/exit), and tg.sh only
+        # ever writes complete lines, so readline cannot block here.
+        try:
+            while True:
+                r, _, _ = select.select([p.stderr], [], [], 0)
+                if not r:
+                    break
+                line = p.stderr.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if line:
+                    log("tg read stderr: %s" % line[:500])
+        except Exception as e:
+            log("stderr drain error: %s" % e)
 
 
     def main():
@@ -174,8 +241,11 @@ let
         idle_cycles = 0
         while True:
             try:
-                p = subprocess.Popen(["tg", "read", "-f", "-r", "-q"],
-                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                # --catch-up drains already-queued updates on (re)start instead
+                # of tg's default skip-to-latest (which would lose all but the
+                # newest update on every reconnect).
+                p = subprocess.Popen(["tg", "read", "-f", "-r", "-q", "--catch-up"],
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                      text=True, bufsize=1)
             except Exception as e:
                 log("failed to start tg read: %s" % e)
@@ -185,12 +255,14 @@ let
             try:
                 while True:
                     rlist, _, _ = select.select([p.stdout], [], [], IDLE_FLUSH_S)
+                    drain_stderr(p)
                     if p.poll() is not None:
                         rest = p.stdout.read()
                         if rest:
                             buf += rest
                         if buf.strip():
                             seen = flush_buf(buf, seen)
+                        drain_stderr(p)
                         break
                     if not rlist:
                         if buf:
@@ -205,6 +277,7 @@ let
                     if not line:
                         if buf:
                             seen = flush_buf(buf, seen)
+                        drain_stderr(p)
                         break
                     idle_cycles = 0
                     if not line.strip():
@@ -237,6 +310,10 @@ let
                     p.kill()
                 except Exception:
                     pass
+            try:
+                drain_stderr(p)
+            except Exception:
+                pass
             log("tg read ended (rc=%s), reconnecting in 5s" % p.returncode)
             time.sleep(5)
 

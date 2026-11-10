@@ -53,6 +53,10 @@ READ OPTIONS (used with 'tg read'):
   -r, --raw             Dump the unmodified JSON payload returned by Telegram getUpdates.
   --ack, --mark-read    Acknowledge and clear retrieved updates from Telegram's servers
                         so subsequent calls will only receive newer messages.
+  --catch-up, --from-start
+                        Follow mode only: process already-queued updates on start
+                        instead of skipping to the latest (the default skips
+                        history so interactive use watches only new arrivals).
 
 GENERAL OPTIONS:
   -h, --help            Display this comprehensive manual.
@@ -184,6 +188,11 @@ EOF
           exit 1
         fi
 
+        # Env-sourced values may carry stray whitespace (editors, exports);
+        # file-parsed values are already stripped via tr -d above.
+        TOKEN=$(printf '%s' "$TOKEN" | tr -d '[:space:]')
+        CHAT_ID=$(printf '%s' "$CHAT_ID" | tr -d '[:space:]')
+
         api_call() {
           local endpoint="$1"
           shift
@@ -212,6 +221,7 @@ EOF
           QUIET=false
           RAW=false
           ACK=false
+          CATCH_UP=false
 
           while [ $# -gt 0 ]; do
             case "$1" in
@@ -244,6 +254,10 @@ EOF
                 ACK=true
                 shift
                 ;;
+              --catch-up|--from-start)
+                CATCH_UP=true
+                shift
+                ;;
               *)
                 echo "Unknown option: $1" >&2
                 echo "Run 'tg --help' for usage." >&2
@@ -271,7 +285,7 @@ EOF
                 --argjson limit "$limit" '
                   [
                     .result[]? |
-                    (.message // .channel_post // .edited_message) as $msg |
+                    (.message // .channel_post // .edited_message // .edited_channel_post) as $msg |
                     select($msg != null) |
                     select($filter != "true" or ($msg.chat.id | tostring) == $chat_id) |
                     ($msg.text // $msg.caption // (if $msg.photo then "[Photo]" elif $msg.document then "[Document: " + ($msg.document.file_name // "file") + "]" else "[Media]" end))
@@ -284,7 +298,7 @@ EOF
                 --argjson limit "$limit" '
                   [
                     .result[]? |
-                    (.message // .channel_post // .edited_message) as $msg |
+                    (.message // .channel_post // .edited_message // .edited_channel_post) as $msg |
                     select($msg != null) |
                     select($filter != "true" or ($msg.chat.id | tostring) == $chat_id) |
                     "[\($msg.date | strftime("%Y-%m-%d %H:%M:%S"))] \($msg.from.first_name // $msg.from.username // $msg.chat.title // "User"): \($msg.text // $msg.caption // (if $msg.photo then "[Photo]" elif $msg.document then "[Document: " + ($msg.document.file_name // "file") + "]" else "[Media]" end))"
@@ -302,11 +316,17 @@ EOF
               fi
             fi
 
-            RESP=$(curl -s "https://api.telegram.org/bot${TOKEN}/getUpdates?offset=-1")
-            LAST_ID=$(echo "$RESP" | jq -r '.result[-1].update_id // empty')
+            # By default follow mode skips already-queued history so interactive
+            # use watches only new arrivals. --catch-up disables that skip so a
+            # consumer (e.g. tg-monitor) drains the backlog instead of losing
+            # all but the latest update on every (re)start.
             OFFSET=""
-            if [ -n "$LAST_ID" ]; then
-              OFFSET=$((LAST_ID + 1))
+            if [ "$CATCH_UP" != "true" ]; then
+              RESP=$(curl -s "https://api.telegram.org/bot${TOKEN}/getUpdates?offset=-1")
+              LAST_ID=$(echo "$RESP" | jq -r '.result[-1].update_id // empty' 2>/dev/null || true)
+              if [ -n "$LAST_ID" ]; then
+                OFFSET=$((LAST_ID + 1))
+              fi
             fi
 
             while true; do
@@ -314,16 +334,32 @@ EOF
               if [ -n "$OFFSET" ]; then
                 URL="${URL}&offset=${OFFSET}"
               fi
-              UPDATES=$(curl -s "$URL")
+              if ! UPDATES=$(curl -s "$URL"); then
+                echo "tg: getUpdates request failed, retrying in 5s" >&2
+                sleep 5
+                continue
+              fi
+              # Empty curl output (network cut mid-read): back off, don't spin.
+              if [ -z "$UPDATES" ]; then
+                echo "tg: empty getUpdates response, retrying in 5s" >&2
+                sleep 5
+                continue
+              fi
               OK=$(echo "$UPDATES" | jq -r '.ok // false' 2>/dev/null || echo "false")
-              if [ "$OK" = "true" ]; then
-                COUNT=$(echo "$UPDATES" | jq -r '.result | length')
-                if [ "$COUNT" -gt 0 ]; then
-                  format_updates "$UPDATES" "$COUNT" "$FILTER_CHAT" "$CHAT_ID" "$QUIET"
-                  NEW_LAST_ID=$(echo "$UPDATES" | jq -r '.result[-1].update_id // empty')
-                  if [ -n "$NEW_LAST_ID" ]; then
-                    OFFSET=$((NEW_LAST_ID + 1))
-                  fi
+              if [ "$OK" != "true" ]; then
+                # Covers 409 conflicts (another getUpdates consumer) and API
+                # errors. Log to stderr (the monitor relays this) and back off
+                # instead of hot-looping.
+                echo "tg: getUpdates returned ok != true, retrying in 5s" >&2
+                sleep 5
+                continue
+              fi
+              COUNT=$(echo "$UPDATES" | jq -r '.result | length // 0' 2>/dev/null || echo "0")
+              if [ "${COUNT:-0}" -gt 0 ] 2>/dev/null; then
+                format_updates "$UPDATES" "$COUNT" "$FILTER_CHAT" "$CHAT_ID" "$QUIET"
+                NEW_LAST_ID=$(echo "$UPDATES" | jq -r '.result[-1].update_id // empty' 2>/dev/null || true)
+                if [ -n "$NEW_LAST_ID" ]; then
+                  OFFSET=$((NEW_LAST_ID + 1))
                 fi
               fi
             done

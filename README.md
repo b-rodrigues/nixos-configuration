@@ -18,7 +18,7 @@ modules/
 ├── scripts.nix             # writeShellScriptBin wrappers (PATH preludes)
 ├── pkgs/freebuff/          # Vendored freebuff package (was a dedicated nixpkgs fork input)
 ├── home/
-│   ├── base.nix            # Shared home-manager config (shell, Hyprland, tools)
+│   ├── base.nix            # Shared home-manager config (shell, Hyprland, theme wiring, tools)
 │   ├── theme.nix           # Solarized Dark palette - single source for all colors
 │   └── waybar-base.nix     # Shared waybar top bar; hosts pass overrides
 ├── apple-silicon/          # Mac-specific: Asahi firmware, notch waybar, avd-fw bridge
@@ -33,8 +33,9 @@ Only three nixpkgs trees are evaluated per rebuild:
 - `nixpkgs-unstable` — llama.cpp/fritchii (desktop), antigravity-cli, avd-fw + asahi-va-driver bridge (macbook)
 - `nixpkgs-opencodev2` — `opencode2` only
 
-Dedicated `release-26.05` (Brave — now in the ambient pin) and `add-freebuff` (now vendored in
-`modules/pkgs/freebuff`) inputs were dropped; `nixpkgs-master` was folded into unstable.
+Dedicated `nixpkgs-brave` (Brave — now in the ambient pin) and `nixpkgs-freebuff`
+(now vendored in `modules/pkgs/freebuff`) inputs were dropped; `nixpkgs-master`
+was folded into unstable.
 
 ## Usage
 
@@ -65,6 +66,10 @@ gc
 - **rofi** scripts: Super+O (find files), Super+G (grep in files)
 - **Desktop only:** llama.cpp model servers (`llamaup`/`down`/`status`, bonsai variants),
   Incus VM helpers (`vm-setup`, `vm-start`, ...) defined next to the services they drive
+- **Desktop only:** Telegram inbox monitor (`modules/desktop/tg-monitor.nix`) — a user
+  service consuming `tg read -f -r -q --catch-up` as raw getUpdates JSON, queueing bare
+  message text to `~/.local/share/tg-monitor/inbox.log` with per-message acks. Same chat
+  filter as the `tg` helper; dedupe keys on (chat, message, text)
 - Modern development tools: Emacs, Git, direnv, aider-chat
 - **Shared shell scripts** as real files under `modules/scripts/` (tg, llm, rofi-files,
   rofi-grep, clipboard menus, nixpr-review, ...) instead of inline Nix strings

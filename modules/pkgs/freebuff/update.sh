@@ -9,14 +9,15 @@ version=$(echo "$data" | jq -r .version)
 
 sed -i 's/version = "[^"]*"/version = "'"$version"'"/' package.nix
 
-for system in x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin; do
+for system in x86_64-linux aarch64-linux; do
   case "$system" in
     x86_64-linux) key="linux-x64" ;;
     aarch64-linux) key="linux-arm64" ;;
-    x86_64-darwin) key="darwin-x64" ;;
-    aarch64-darwin) key="darwin-arm64" ;;
   esac
   raw_hash=$(echo "$data" | jq -r ".binaryChecksums[\"$key\"]")
   sri_hash=$(nix-hash --type sha256 --to-sri "$raw_hash")
-  sed -i "s#${system} = \"sha256-[^\"]*\"#${system} = \"${sri_hash}\"#" package.nix
+  # The hashes live as `hash = "sha256-..."` inside each per-system block,
+  # so scope the replacement to that system's block (the old
+  # `${system} = "sha256-..."` pattern never matched).
+  sed -i "/^[[:space:]]*${system} = {/,/^[[:space:]]*};/ s#hash = \"sha256-[^\"]*\"#hash = \"${sri_hash}\"#" package.nix
 done

@@ -10,6 +10,11 @@
 #
 # Host files keep their own `style` CSS (the MacBook bar is tuned for the
 # notch: different paddings, battery selectors, etc.).
+#
+# NOTE on overrides: `mkMainBar` merges with lib.recursiveUpdate, so LIST keys
+# (modules-left/center/right) are REPLACED wholesale, not appended. A host
+# that pins its own modules-right list will not pick up base-side module
+# additions (or their config blocks) until its list is updated too.
 #===============================================================================
 
 {

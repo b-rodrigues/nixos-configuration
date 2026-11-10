@@ -30,14 +30,6 @@ let
       asset = "freebuff-linux-arm64.tar.gz";
       hash = "sha256-/vauvw6z07ZvG68ITE2M7RkPmQRyuZLtaOURO0DUgdk=";
     };
-    x86_64-darwin = {
-      asset = "freebuff-darwin-x64.tar.gz";
-      hash = "sha256-EVBVxj4VlSMGDg61HslA88eW9rjHIlqfJqXw+uBK0p8=";
-    };
-    aarch64-darwin = {
-      asset = "freebuff-darwin-arm64.tar.gz";
-      hash = "sha256-gKwMI4SVQ/EcudrdyyVpC18SgE9kgRJxIlIjlytWDeM=";
-    };
   };
 
   srcInfo =
@@ -54,8 +46,6 @@ let
     platforms = [
       "x86_64-linux"
       "aarch64-linux"
-      "x86_64-darwin"
-      "aarch64-darwin"
     ];
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
   };

@@ -529,6 +529,9 @@
         enableBashIntegration = false;
         defaultCommand = "fd --type f --hidden --follow --exclude .git";
         changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
+        # NOTE: the live colors are FZF_DEFAULT_OPTS in initExtra below (this
+        # integration is disabled). Both surfaces read the same theme.hex
+        # values so they stay in sync; change colors in theme.nix only.
         colors = {
           "bg+" = "#${hex.base02}";
           bg = "#${hex.base03}";
