@@ -6,16 +6,14 @@
 # - Hyprland window manager with BÉPO keyboard layout
 # - Solarized Dark theme throughout
 # - Development tools (Emacs, Git, direnv)
-# - Modern applications (Brave from pinned release-26.05, GIMP, etc.)
+# - Modern applications (Brave from the ambient release-26.05 set, GIMP, etc.)
 #===============================================================================
 
 {
   config,
   pkgs,
-  pkgs-brave,
-  pkgs-master,
+  pkgs-unstable,
   pkgs-opencodev2,
-  pkgs-freebuff,
   inputs,
   lib,
   ...
@@ -287,9 +285,9 @@
 
       # Development & AI Tools
       aider-chat
-      pkgs-master.antigravity-cli
+      pkgs-unstable.antigravity-cli
       pkgs-opencodev2.opencode2
-      pkgs-freebuff.freebuff
+      (pkgs.callPackage ./pkgs/freebuff/package.nix { })
       jq
 
       # Web & Communication
@@ -303,7 +301,7 @@
       # The macbook does not need this: modules/apple-silicon replaces
       # libva-v4l2_request with a fork that decodes into the exported buffers,
       # so hardware decoding works there and is left enabled.
-      (pkgs-brave.brave.override {
+      (pkgs.brave.override {
         commandLineArgs = lib.optionalString (!(config.hardware.asahi.enable or false)) "--disable-accelerated-video-decode";
       })
 

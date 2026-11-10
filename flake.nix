@@ -2,28 +2,21 @@
   description = "NixOS configuration for Bruno - Desktop and Apple Silicon";
 
   inputs = {
-    # Main NixOS release
+    # Main NixOS release — the ambient pkgs set for both hosts (including
+    # Brave, re-added upstream to release-26.05)
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    # For packages from unstable (like Brave)
+    # Bleeding edge: llama.cpp + fritchii (desktop), antigravity-cli, and
+    # avd-fw / asahi-va-driver (macbook overlay bridge, used when the 26.05
+    # input does not yet package them)
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Pinned stable branch for Brave (re-added via #584546; nixos-26.05
-    # channel has not caught up yet). Only Brave is taken from here.
-    nixpkgs-brave.url = "github:NixOS/nixpkgs/release-26.05";
+    # OpenCode v2 packaging (own branch of nixpkgs) — only opencode2 is taken
+    nixpkgs-opencodev2.url = "github:b-rodrigues/nixpkgs/opencodev2";
 
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Nixpkgs Master (for cutting edge packages like antigravity)
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
-
-    # Nixpkgs with Freebuff CLI (branch add-freebuff)
-    nixpkgs-freebuff.url = "github:b-rodrigues/nixpkgs/add-freebuff";
-
-    # Nixpkgs with OpenCode v2 (branch opencodev2)
-    nixpkgs-opencodev2.url = "github:b-rodrigues/nixpkgs/opencodev2";
 
     # Apple Silicon support (kernel, firmware, etc.) - only used by macbook
     apple-silicon-support.url = "github:nix-community/nixos-apple-silicon/";
@@ -45,9 +38,6 @@
     inputs@{
       nixpkgs,
       nixpkgs-unstable,
-      nixpkgs-brave,
-      nixpkgs-master,
-      nixpkgs-freebuff,
       nixpkgs-opencodev2,
       home-manager,
       apple-silicon-support,
@@ -55,51 +45,19 @@
       ...
     }:
     let
-      # Desktop (x86_64)
-      mkDesktopPkgs =
-        system:
-        import nixpkgs-unstable {
+      # Single helper instead of one per source: import a nixpkgs tree with
+      # unfree packages enabled and an optional cudaSupport knob (desktop
+      # only). freebuff is vendored in modules/pkgs/freebuff and brave comes
+      # from the ambient release-26.05 set, so no dedicated inputs for them.
+      mkNixpkgs =
+        src: system:
+        { cudaSupport ? false }:
+        import src {
           inherit system;
           config = {
             allowUnfree = true;
-            cudaSupport = true;
+            cudaSupport = cudaSupport;
           };
-        };
-
-      # Apple Silicon (aarch64)
-      mkMacPkgs =
-        system:
-        import nixpkgs-unstable {
-          inherit system;
-          config.allowUnfree = true;
-        };
-
-      mkMasterPkgs =
-        system:
-        import nixpkgs-master {
-          inherit system;
-          config.allowUnfree = true;
-        };
-
-      mkFreebuffPkgs =
-        system:
-        import nixpkgs-freebuff {
-          inherit system;
-          config.allowUnfree = true;
-        };
-
-      mkOpencodev2Pkgs =
-        system:
-        import nixpkgs-opencodev2 {
-          inherit system;
-          config.allowUnfree = true;
-        };
-
-      mkBravePkgs =
-        system:
-        import nixpkgs-brave {
-          inherit system;
-          config.allowUnfree = true;
         };
     in
     {
@@ -108,11 +66,8 @@
         system = "x86_64-linux";
         specialArgs = {
           inherit inputs;
-          pkgs-unstable = mkDesktopPkgs "x86_64-linux";
-          pkgs-brave = mkBravePkgs "x86_64-linux";
-          pkgs-master = mkMasterPkgs "x86_64-linux";
-          pkgs-freebuff = mkFreebuffPkgs "x86_64-linux";
-          pkgs-opencodev2 = mkOpencodev2Pkgs "x86_64-linux";
+          pkgs-unstable = mkNixpkgs inputs.nixpkgs-unstable "x86_64-linux" { cudaSupport = true; };
+          pkgs-opencodev2 = mkNixpkgs inputs.nixpkgs-opencodev2 "x86_64-linux" { };
         };
         modules = [
           ./modules/common.nix
@@ -129,11 +84,8 @@
         system = "aarch64-linux";
         specialArgs = {
           inherit inputs;
-          pkgs-unstable = mkMacPkgs "aarch64-linux";
-          pkgs-brave = mkBravePkgs "aarch64-linux";
-          pkgs-master = mkMasterPkgs "aarch64-linux";
-          pkgs-freebuff = mkFreebuffPkgs "aarch64-linux";
-          pkgs-opencodev2 = mkOpencodev2Pkgs "aarch64-linux";
+          pkgs-unstable = mkNixpkgs inputs.nixpkgs-unstable "aarch64-linux" { };
+          pkgs-opencodev2 = mkNixpkgs inputs.nixpkgs-opencodev2 "aarch64-linux" { };
         };
         modules = [
           # Apple Silicon support module
