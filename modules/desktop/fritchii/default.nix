@@ -1,11 +1,11 @@
 # Lichii (Frizti fork) - Nintendo Switch emulator specialized for
 # The Legend of Zelda: Ocarina of Time (Switch 2 "nx2" fork of eden/yuzu).
 #
-# Built from the nx2 branch at the commit the "Frizti v3" release was built
-# from, since the fork publishes Windows binaries only. Packaging follows
-# nixpkgs' eden derivation: every CPM dependency comes from nixpkgs
-# (CPMUtil finds system packages), except a few download-only assets which
-# are pre-seeded into CPM's cache below.
+# Built from the commit the "Fritchii v5.6" release was built from, since the
+# fork publishes Windows binaries only. Packaging follows nixpkgs' eden
+# derivation: every CPM dependency comes from nixpkgs (CPMUtil finds system
+# packages), except a few download-only assets which are pre-seeded into
+# CPM's cache below.
 {
   lib,
   stdenv,
@@ -69,13 +69,13 @@ in
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "lichii-frizti";
-  version = "3";
+  version = "5.6";
 
   src = fetchFromGitHub {
     owner = "Frizti";
     repo = "Fritchii";
-    rev = "72e5ad6c22ea5b159b44a184d4dea6b669df0ede";
-    hash = "sha256-QJ+iNFLRnOgCVNJmwtv5ROMhaRmJbRa8LgH2cg0Klzs=";
+    rev = "696a456641ae83c9f8b6564c57ac311c7ef56799";
+    hash = "sha256-1Jnfd1qJDi3JMaRyVHQ8NydCv56CsOw71CulTJl5cQE=";
   };
 
   strictDeps = true;
@@ -175,10 +175,10 @@ stdenv.mkDerivation (finalAttrs: {
       > "$reshadeDir"/.cpm_patch_key
 
     # SCM-revision metadata (no .git tree in a Nix build)
-    printf '%s\n' '72e5ad6c22ea5b159b44a184d4dea6b669df0ede' > GIT-COMMIT
+    printf '%s\n' '696a456641ae83c9f8b6564c57ac311c7ef56799' > GIT-COMMIT
     printf 'nx2\n' > GIT-REFSPEC
-    printf 'frizti-v3\n' > GIT-TAG
-    printf 'frizti-v3\n' > GIT-RELEASE
+    printf 'fritchii-v5.6\n' > GIT-TAG
+    printf 'fritchii-v5.6\n' > GIT-RELEASE
   '';
 
   postInstall = ''
