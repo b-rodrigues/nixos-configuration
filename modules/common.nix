@@ -16,11 +16,20 @@
   pkgs-master,
   pkgs-opencodev2,
   pkgs-freebuff,
+  inputs,
   lib,
   ...
 }:
 
 {
+  #=============================================================================
+  # Shared flake inputs (bootvine module, used below)
+  #=============================================================================
+
+  imports = [
+    inputs.bootvine.nixosModules.default
+  ];
+
   #=============================================================================
   # Trusted users
   #=============================================================================
@@ -62,6 +71,14 @@
   #=============================================================================
 
   boot.loader.systemd-boot.enable = true;
+
+  #=============================================================================
+  # BOOTVINE - Live dependency tree of systemd jobs on the boot console
+  # Shows during boot (initrd + stage 2), shutdown and reboot.
+  # https://codeberg.org/wvhulle/bootvine
+  #=============================================================================
+
+  services.bootvine.enable = true;
 
   #=============================================================================
   # GRAPHICS CONFIGURATION - Base

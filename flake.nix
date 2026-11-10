@@ -28,6 +28,13 @@
     # Custom Iosevka font
     iosevka-custom.url = "github:b-rodrigues/iosevka_custom";
     iosevka-custom.inputs.nixpkgs.follows = "nixpkgs";
+
+    # bootvine - live dependency tree of systemd jobs on the boot console
+    # https://codeberg.org/wvhulle/bootvine
+    bootvine = {
+      url = "git+https://codeberg.org/wvhulle/bootvine";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
